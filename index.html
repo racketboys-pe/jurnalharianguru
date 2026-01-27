@@ -13,8 +13,10 @@
             background-color: #f8fafc;
         }
 
+        /* 1. UBAH BACKGROUND LOGIN DI SINI */
         .login-bg {
-            background-image: linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.8)), url('https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=1920&q=80');
+            background-image: linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.8)), 
+                              url('https://github.com/racketboys-pe/jurnalharianguru/blob/main/Copy%20of%20RAPAT%20KERJA%20SEMESTER%202.png?raw=true'); /* Ganti link ini */
             background-size: cover;
             background-position: center;
         }
@@ -101,8 +103,10 @@
         <div class="w-full max-w-md order-1 lg:order-2">
             <div class="bg-white/95 backdrop-blur-md p-8 rounded-3xl border border-white shadow-2xl">
                 <div class="text-center mb-6">
-                    <div class="bg-indigo-600 w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg rotate-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    <!-- 2. UBAH LOGO DI SINI -->
+                    <div class="bg-indigo-600 w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg rotate-3 overflow-hidden">
+                        <!-- Ganti src di bawah ini dengan link gambar logo Anda -->
+                        <img id="login-logo-img" src="https://github.com/racketboys-pe/jurnalharianguru/blob/main/WEB%20TPPK%20ULUJAMI%2006.png?raw=true" alt="Logo Sekolah" class="w-10 h-10 object-contain">
                     </div>
                     <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Jurnal Digital</h1>
                     <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">SDN Ulujami 06 Pagi</p>
@@ -593,7 +597,7 @@
                 items: items,
                 totalDur: totalDur,
                 cat: cat,
-                refMingguan: refMingguan, // Ada jika Jumat
+                refMingguan: refMingguan, 
                 status: 'Belum Validasi'
             });
 
@@ -656,7 +660,6 @@
                 body.appendChild(tr);
             });
 
-            // Handle Blok Refleksi Mingguan (hanya muncul jika ada data refleksi minggu ini)
             const refBlock = document.getElementById('v-refleksi-mingguan-block');
             if (currentRefMingguan) {
                 refBlock.classList.remove('hidden');
@@ -804,7 +807,7 @@
                 akt: e.items.map(it => `${it.desc} (${it.start}-${it.end})`).join('; '),
                 dur: e.totalDur,
                 cat: `${e.cat || '-'} | Refleksi Pekan: ${e.refMingguan || '-'}`,
-                ref: '' // Kolom lama dikosongkan/diabaikan
+                ref: '' 
             }));
 
             try {
