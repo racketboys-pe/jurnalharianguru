@@ -95,7 +95,7 @@
         <div class="w-full max-w-md order-1 lg:order-2">
             <div class="bg-white/95 backdrop-blur-md p-8 rounded-3xl border border-white shadow-2xl">
                 <div class="text-center mb-6">
-                    <div class="w-40 h-40 flex items-center justify-center mx-auto mb-4 overflow-hidden">
+                    <div class="w-20 h-20 flex items-center justify-center mx-auto mb-4 overflow-hidden">
                         <img id="login-logo-img" src="https://github.com/racketboys-pe/jurnalharianguru/blob/main/WEB%20TPPK%20ULUJAMI%2006.png?raw=true" alt="Logo" class="w-10 h-10 object-contain">
                     </div>
                     <h1 class="text-2xl font-bold text-slate-800 tracking-tight text-center">Jurnal Digital</h1>
@@ -132,7 +132,7 @@
                     </button>
                 </div>
                 <div class="mt-6 pt-6 border-t border-slate-100 text-center">
-                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">&copy; strafrechts - SDN Ulujami 06 Pagi</p>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">&copy; ryzaraccman - SDN Ulujami 06 Pagi</p>
                 </div>
             </div>
         </div>
@@ -331,7 +331,7 @@
             try {
                 const res = await fetch(GAS_URL);
                 const result = await res.json();
-                if (result.status === "success") {
+                if (result.status === "success" && result.data) {
                     const cont = document.getElementById('validation-ticker');
                     cont.innerHTML = '';
                     const validData = result.data.filter(r => r.status_validasi === 'Valid').sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 8);
@@ -418,7 +418,12 @@
                 const result = await res.json();
                 if (result.status === "success") {
                     cloudDataRaw = result.data;
-                    const filteredEntries = cloudDataRaw.filter(row => String(row.nip).replace("'", "") === String(nip));
+                    
+                    // Filter berdasarkan NIP (membersihkan tanda kutip jika ada)
+                    const filteredEntries = cloudDataRaw.filter(row => {
+                        const rowNip = String(row.nip).replace(/'/g, "").trim();
+                        return rowNip === String(nip).trim();
+                    });
                     
                     journalEntries = filteredEntries.map(row => {
                         const items = String(row.rincian_aktivitas).split('; ').map(it => {
@@ -439,16 +444,26 @@
 
                     if (filteredEntries.length > 0) {
                         const lastEntry = filteredEntries[filteredEntries.length - 1];
-                        profile.nama = lastEntry.nama_guru;
-                        profile.jenis = lastEntry.jenis_guru;
-                        profile.mapel = lastEntry.mata_pelajaran;
+                        profile.nama = lastEntry.nama_guru || '';
+                        profile.jenis = lastEntry.jenis_guru || 'Guru Kelas';
+                        profile.mapel = lastEntry.mata_pelajaran || '';
                     }
                     localStorage.setItem('jurnal_entries', JSON.stringify(journalEntries));
                     localStorage.setItem('jurnal_profile', JSON.stringify(profile));
                     renderTable();
                 }
             } catch (e) {
+                console.error("Fetch Data Error:", e);
                 showToast("Gagal memanggil data Cloud", true);
+            } finally {
+                const btn = document.getElementById('btn-login');
+                const loader = document.getElementById('login-loader');
+                const text = document.getElementById('login-text');
+                if (btn) {
+                    btn.disabled = false;
+                    text.innerText = "Masuk Sistem";
+                    loader.classList.add('hidden');
+                }
             }
         }
 
@@ -493,6 +508,12 @@
             document.getElementById('view-history').classList.toggle('hidden', v !== 'history'); 
             document.getElementById('view-kepsek-report').classList.toggle('hidden', v !== 'report'); 
             document.getElementById('view-kepsek-settings').classList.toggle('hidden', v !== 'settings'); 
+            
+            document.getElementById('btn-tab-input')?.classList.toggle('active-tab', v === 'input');
+            document.getElementById('btn-tab-history')?.classList.toggle('active-tab', v === 'history');
+            document.getElementById('btn-tab-report')?.classList.toggle('active-tab', v === 'report');
+            document.getElementById('btn-tab-settings')?.classList.toggle('active-tab', v === 'settings');
+
             if (v === 'history') renderHistoryCards();
         }
 
@@ -625,7 +646,7 @@
             try {
                 const res = await fetch(GAS_URL);
                 const result = await res.json();
-                if (result.status === "success") { cloudDataRaw = result.data; renderCloudTable(cloudDataRaw); showToast("Data Cloud Dimuat"); }
+                if (result.status === "success" && result.data) { cloudDataRaw = result.data; renderCloudTable(cloudDataRaw); showToast("Data Cloud Dimuat"); }
             } catch (e) { showToast("Gagal ambil data", true); }
             finally { btn.disabled = false; btn.innerText = "Segarkan"; }
         }
