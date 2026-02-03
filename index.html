@@ -13,7 +13,6 @@
             background-color: #f8fafc;
         }
 
-        /* Background Login */
         .login-bg {
             background-image: linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.8)), 
                               url('https://github.com/racketboys-pe/jurnalharianguru/blob/main/Copy%20of%20RAPAT%20KERJA%20SEMESTER%202.png?raw=true');
@@ -56,10 +55,7 @@
             animation: spin 1s linear infinite;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         .active-tab {
             background-color: #4f46e5;
@@ -78,7 +74,6 @@
 
     <!-- HALAMAN LOGIN -->
     <div id="login-screen" class="login-bg flex items-center justify-center min-h-screen p-4 flex-col lg:flex-row gap-8">
-        <!-- Widget Informasi Validasi -->
         <div class="w-full max-w-sm order-2 lg:order-1 no-print">
             <div class="bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/10 shadow-2xl">
                 <h3 class="text-white text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -91,7 +86,6 @@
             </div>
         </div>
 
-        <!-- Kartu Login Utama -->
         <div class="w-full max-w-md order-1 lg:order-2">
             <div class="bg-white/95 backdrop-blur-md p-8 rounded-3xl border border-white shadow-2xl">
                 <div class="text-center mb-6">
@@ -193,21 +187,9 @@
                             <div class="space-y-2">
                                 <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Kegiatan & Waktu</label>
                                 <div id="activities-container" class="space-y-3 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
-                                    <div class="activity-row p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-2 relative">
-                                        <textarea placeholder="Rincian kegiatan..." required class="akt-desc w-full px-3 py-2 rounded-lg border border-slate-200 text-xs outline-none focus:ring-2 focus:ring-indigo-500 min-h-[60px] transition-all"></textarea>
-                                        <div class="flex items-center gap-2">
-                                            <div class="flex flex-col flex-1">
-                                                <span class="text-[8px] uppercase font-bold text-slate-400 ml-1">Mulai</span>
-                                                <input type="time" required class="akt-start w-full px-2 py-1.5 rounded-lg border border-slate-200 text-xs outline-none">
-                                            </div>
-                                            <div class="flex flex-col flex-1">
-                                                <span class="text-[8px] uppercase font-bold text-slate-400 ml-1">Selesai</span>
-                                                <input type="time" required class="akt-end w-full px-2 py-1.5 rounded-lg border border-slate-200 text-xs outline-none">
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <!-- Baris default diinject JS -->
                                 </div>
-                                <button type="button" onclick="addActivityRow()" class="w-full mt-2 bg-indigo-50 text-indigo-600 py-2 rounded-xl text-[10px] font-bold hover:bg-indigo-100 transition-colors uppercase tracking-widest">+ Tambah Baris</button>
+                                <button type="button" onclick="addActivityRow()" class="w-full mt-2 bg-indigo-50 text-indigo-600 py-2 rounded-xl text-[10px] font-bold hover:bg-indigo-100 transition-colors uppercase tracking-widest">+ Tambah Baris Baru</button>
                             </div>
 
                             <div class="pt-2 border-t border-slate-100">
@@ -245,7 +227,7 @@
                 </div>
             </div>
 
-            <!-- Tampilan Kepala Sekolah (Laporan & Pengaturan) -->
+            <!-- Tampilan Kepala Sekolah -->
             <div id="view-kepsek-report" class="hidden space-y-6">
                 <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
                     <div class="w-full md:w-auto">
@@ -296,12 +278,11 @@
                 </div>
             </div>
 
-            <!-- Tampilan Histori -->
             <div id="view-history" class="hidden space-y-6">
                 <div class="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                     <div>
                         <h2 class="text-lg font-bold text-slate-800">Histori Jurnal Pribadi</h2>
-                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Tersimpan di database sekolah</p>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Pilih entri untuk diedit atau diduplikasi</p>
                     </div>
                     <div class="flex gap-2">
                         <button onclick="fetchTeacherData(profile.nip)" class="bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-100 transition-all">Segarkan Data</button>
@@ -324,8 +305,6 @@
         let cloudPasswords = { guru: "guru123", kepsek: "admin123" };
         let editEntryId = null;
 
-        // --- Inisialisasi Fungsi ---
-
         async function fetchValidationTicker() {
             if (!GAS_URL || GAS_URL.includes("URL_GOOGLE")) return;
             try {
@@ -343,19 +322,12 @@
                         cont.appendChild(div);
                     });
                 }
-            } catch (e) {
-                console.error("Ticker Error:", e);
-            }
+            } catch (e) { console.error("Ticker Error:", e); }
         }
 
         async function checkDatabaseConnection() {
             const text = document.getElementById('db-status-text');
             const dot = document.getElementById('db-status-dot');
-            if (!GAS_URL || GAS_URL.includes("URL_GOOGLE")) {
-                text.innerText = "Konfigurasi Salah";
-                dot.className = "w-2 h-2 rounded-full bg-red-500";
-                return;
-            }
             try {
                 const res = await fetch(GAS_URL);
                 const result = await res.json();
@@ -365,17 +337,14 @@
                     text.innerText = "Terhubung"; text.className = "text-[9px] font-bold text-green-600 uppercase";
                     dot.className = "w-2 h-2 rounded-full bg-green-500 pulse-valid";
                 }
-            } catch (e) {
-                text.innerText = "Terputus"; dot.className = "w-2 h-2 rounded-full bg-red-500";
-            }
+            } catch (e) { text.innerText = "Terputus"; dot.className = "w-2 h-2 rounded-full bg-red-500"; }
         }
 
         window.onload = () => { 
             checkDatabaseConnection(); 
             fetchValidationTicker(); 
+            addActivityRow(); 
         };
-
-        // --- Logika Login ---
 
         function selectRole(role) {
             selectedRole = role;
@@ -407,9 +376,7 @@
                 document.getElementById('main-dashboard').classList.remove('hidden');
                 document.getElementById('role-name').innerText = selectedRole === 'guru' ? 'Guru' : 'Kepala Sekolah';
                 initApp();
-            } else {
-                showToast("Password atau ID Salah!", true);
-            }
+            } else { showToast("Password atau ID Salah!", true); }
         }
 
         async function fetchTeacherData(nip) {
@@ -418,56 +385,33 @@
                 const result = await res.json();
                 if (result.status === "success") {
                     cloudDataRaw = result.data;
-                    
-                    // Filter berdasarkan NIP (membersihkan tanda kutip jika ada)
-                    const filteredEntries = cloudDataRaw.filter(row => {
-                        const rowNip = String(row.nip).replace(/'/g, "").trim();
-                        return rowNip === String(nip).trim();
-                    });
-                    
+                    const filteredEntries = cloudDataRaw.filter(row => String(row.nip).replace(/'/g, "").trim() === String(nip).trim());
                     journalEntries = filteredEntries.map(row => {
                         const items = String(row.rincian_aktivitas).split('; ').map(it => {
                             const match = it.match(/(.*) \((.*)-(.*)\)/);
                             return match ? { desc: match[1], start: match[2], end: match[3] } : { desc: it, start: '', end: '' };
                         });
-                        return {
-                            id: row.id_jurnal,
-                            tgl: row.tanggal_aktivitas,
-                            weekId: getWeekIdentifier(row.tanggal_aktivitas),
-                            items: items,
-                            totalDur: row.durasi_menit,
-                            cat: row.catatan,
-                            refMingguan: row.catatan && row.catatan.includes('| Ref: ') ? row.catatan.split('| Ref: ')[1] : '',
-                            status: row.status_validasi
-                        };
+                        return { id: row.id_jurnal, tgl: row.tanggal_aktivitas, weekId: getWeekIdentifier(row.tanggal_aktivitas), items: items, totalDur: row.durasi_menit, cat: row.catatan, refMingguan: row.catatan && row.catatan.includes('| Ref: ') ? row.catatan.split('| Ref: ')[1] : '', status: row.status_validasi };
                     });
-
                     if (filteredEntries.length > 0) {
-                        const lastEntry = filteredEntries[filteredEntries.length - 1];
-                        profile.nama = lastEntry.nama_guru || '';
-                        profile.jenis = lastEntry.jenis_guru || 'Guru Kelas';
-                        profile.mapel = lastEntry.mata_pelajaran || '';
+                        const last = filteredEntries[filteredEntries.length - 1];
+                        profile.nama = last.nama_guru || '';
+                        profile.jenis = last.jenis_guru || 'Guru Kelas';
+                        profile.mapel = last.mata_pelajaran || '';
                     }
                     localStorage.setItem('jurnal_entries', JSON.stringify(journalEntries));
                     localStorage.setItem('jurnal_profile', JSON.stringify(profile));
                     renderTable();
                 }
-            } catch (e) {
-                console.error("Fetch Data Error:", e);
-                showToast("Gagal memanggil data Cloud", true);
-            } finally {
-                const btn = document.getElementById('btn-login');
-                const loader = document.getElementById('login-loader');
-                const text = document.getElementById('login-text');
-                if (btn) {
-                    btn.disabled = false;
-                    text.innerText = "Masuk Sistem";
-                    loader.classList.add('hidden');
+            } catch (e) { showToast("Gagal memanggil data Cloud", true); }
+            finally {
+                if (document.getElementById('btn-login')) {
+                    document.getElementById('btn-login').disabled = false;
+                    document.getElementById('login-text').innerText = "Masuk Sistem";
+                    document.getElementById('login-loader').classList.add('hidden');
                 }
             }
         }
-
-        // --- Dashboard & Fitur ---
 
         function initApp() {
             if (selectedRole === 'guru') {
@@ -508,21 +452,46 @@
             document.getElementById('view-history').classList.toggle('hidden', v !== 'history'); 
             document.getElementById('view-kepsek-report').classList.toggle('hidden', v !== 'report'); 
             document.getElementById('view-kepsek-settings').classList.toggle('hidden', v !== 'settings'); 
-            
             document.getElementById('btn-tab-input')?.classList.toggle('active-tab', v === 'input');
             document.getElementById('btn-tab-history')?.classList.toggle('active-tab', v === 'history');
             document.getElementById('btn-tab-report')?.classList.toggle('active-tab', v === 'report');
             document.getElementById('btn-tab-settings')?.classList.toggle('active-tab', v === 'settings');
-
             if (v === 'history') renderHistoryCards();
         }
 
         function addActivityRow(data = null) {
             const container = document.getElementById('activities-container');
             const row = document.createElement('div');
-            row.className = "activity-row p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-2 relative";
-            row.innerHTML = `<button type="button" onclick="this.parentElement.remove()" class="absolute top-1 right-2 text-red-400 hover:text-red-600 font-bold text-xs">×</button><textarea placeholder="Rincian kegiatan..." required class="akt-desc w-full px-3 py-2 rounded-lg border border-slate-200 text-xs outline-none focus:ring-2 focus:ring-indigo-500 min-h-[60px] transition-all">${data ? data.desc : ''}</textarea><div class="flex items-center gap-2"><div class="flex flex-col flex-1"><span class="text-[8px] uppercase font-bold text-slate-400 ml-1">Mulai</span><input type="time" required class="akt-start w-full px-2 py-1.5 rounded-lg border border-slate-200 text-xs outline-none" value="${data ? data.start : ''}"></div><div class="flex flex-col flex-1"><span class="text-[8px] uppercase font-bold text-slate-400 ml-1">Selesai</span><input type="time" required class="akt-end w-full px-2 py-1.5 rounded-lg border border-slate-200 text-xs outline-none" value="${data ? data.end : ''}"></div></div>`;
+            row.className = "activity-row p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-2 relative group";
+            row.innerHTML = `
+                <div class="absolute top-2 right-2 flex gap-2 no-print">
+                    <button type="button" onclick="duplicateCurrentRow(this)" title="Duplikat baris" class="text-indigo-400 hover:text-indigo-600 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                    <button type="button" onclick="this.closest('.activity-row').remove()" title="Hapus baris" class="text-red-300 hover:text-red-500 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+                <textarea placeholder="Rincian kegiatan..." required class="akt-desc w-full px-3 py-2 rounded-lg border border-slate-200 text-xs outline-none focus:ring-2 focus:ring-indigo-500 min-h-[60px] transition-all">${data ? data.desc : ''}</textarea>
+                <div class="flex items-center gap-2">
+                    <div class="flex flex-col flex-1">
+                        <span class="text-[8px] uppercase font-bold text-slate-400 ml-1">Mulai</span>
+                        <input type="time" required class="akt-start w-full px-2 py-1.5 rounded-lg border border-slate-200 text-xs outline-none" value="${data ? data.start : ''}">
+                    </div>
+                    <div class="flex flex-col flex-1">
+                        <span class="text-[8px] uppercase font-bold text-slate-400 ml-1">Selesai</span>
+                        <input type="time" required class="akt-end w-full px-2 py-1.5 rounded-lg border border-slate-200 text-xs outline-none" value="${data ? data.end : ''}">
+                    </div>
+                </div>`;
             container.appendChild(row);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function duplicateCurrentRow(btn) {
+            const row = btn.closest('.activity-row');
+            const data = { desc: row.querySelector('.akt-desc').value, start: row.querySelector('.akt-start').value, end: row.querySelector('.akt-end').value };
+            addActivityRow(data);
+            showToast("Baris Diduplikasi");
         }
 
         function addEntry(e) {
@@ -553,7 +522,9 @@
             localStorage.setItem('jurnal_entries', JSON.stringify(journalEntries));
             renderTable();
             document.getElementById('jurnal-form').reset();
-            document.getElementById('activities-container').innerHTML = ''; addActivityRow(); checkFriday();
+            document.getElementById('activities-container').innerHTML = ''; 
+            addActivityRow(); 
+            checkFriday();
             showToast("Data Tersimpan Lokal");
         }
 
@@ -561,10 +532,26 @@
             const entry = journalEntries.find(e => e.id === id);
             if (!entry || entry.status === "Valid") return showToast("Sudah Valid! Tidak bisa diedit.", true);
             editEntryId = id;
-            switchView('input');
+            populateFormFromEntry(entry);
             document.getElementById('edit-indicator').classList.remove('hidden');
             document.getElementById('btn-cancel-edit').classList.remove('hidden');
             document.getElementById('btn-submit-jurnal').innerText = "Perbarui Data";
+        }
+
+        // --- FITUR DUPLIKAT DARI HISTORI ---
+        function duplicateFromHistory(id) {
+            const entry = journalEntries.find(e => e.id === id);
+            if (!entry) return;
+            editEntryId = null; // Pastikan ini entri baru, bukan timpa yang lama
+            populateFormFromEntry(entry);
+            document.getElementById('edit-indicator').classList.add('hidden');
+            document.getElementById('btn-cancel-edit').classList.add('hidden');
+            document.getElementById('btn-submit-jurnal').innerText = "Simpan Laporan";
+            showToast("Data Histori Disalin ke Formulir");
+        }
+
+        function populateFormFromEntry(entry) {
+            switchView('input');
             document.getElementById('form-container').scrollIntoView({ behavior: 'smooth' });
             document.getElementById('inp-tanggal').value = entry.tgl;
             document.getElementById('inp-catatan').value = entry.cat;
@@ -598,8 +585,6 @@
         function checkFriday() { const val = document.getElementById('inp-tanggal').value; if(!val) return; const date = new Date(val); const cont = document.getElementById('friday-reflection-container'); if (date.getDay() === 5) cont.classList.remove('hidden'); else cont.classList.add('hidden'); }
         function handleLogout() { location.reload(); }
 
-        // --- Render UI ---
-
         function renderTable() {
             const container = document.getElementById('output-container');
             container.innerHTML = '';
@@ -623,20 +608,36 @@
                 const card = document.createElement('div');
                 const isValid = e.status === "Valid";
                 card.className = "bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden transition-all hover:shadow-md";
-                card.innerHTML = `<div class="flex justify-between items-start mb-3"><span class="text-[9px] font-bold bg-indigo-100 text-indigo-700 px-2 py-1 rounded-md uppercase tracking-wider">${formatDateShort(e.tgl)}</span><div class="flex flex-col items-end"><span class="text-[9px] text-slate-400 font-bold uppercase">${e.totalDur} MENIT</span><span class="text-[8px] font-black uppercase tracking-tighter ${isValid ? 'text-green-600' : 'text-slate-400'}">${e.status}</span></div></div><ul class="text-[11px] text-slate-600 mb-3 space-y-1">${e.items.map(it => `<li>- ${it.desc}</li>`).join('')}</ul><div class="pt-2 border-t border-slate-100 flex justify-between items-center"><p class="text-[10px] text-slate-400 font-medium">Catatan: ${e.cat || '-'}</p>${!isValid ? `<button onclick="editEntry(${e.id})" class="text-[10px] font-bold text-indigo-600 hover:underline">EDIT</button>` : ''}</div>`;
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="text-[9px] font-bold bg-indigo-100 text-indigo-700 px-2 py-1 rounded-md uppercase tracking-wider">${formatDateShort(e.tgl)}</span>
+                        <div class="flex flex-col items-end">
+                            <span class="text-[9px] text-slate-400 font-bold uppercase">${e.totalDur} MENIT</span>
+                            <span class="text-[8px] font-black uppercase tracking-tighter ${isValid ? 'text-green-600' : 'text-slate-400'}">${e.status}</span>
+                        </div>
+                    </div>
+                    <ul class="text-[11px] text-slate-600 mb-3 space-y-1">
+                        ${e.items.map(it => `<li>- ${it.desc}</li>`).join('')}
+                    </ul>
+                    <div class="pt-2 border-t border-slate-100 flex justify-between items-center">
+                        <p class="text-[10px] text-slate-400 font-medium truncate max-w-[120px]">Catatan: ${e.cat || '-'}</p>
+                        <div class="flex gap-3">
+                            <button onclick="duplicateFromHistory(${e.id})" class="text-[10px] font-bold text-indigo-600 hover:underline uppercase">Duplikat</button>
+                            ${!isValid ? `<button onclick="editEntry(${e.id})" class="text-[10px] font-bold text-slate-600 hover:underline uppercase">EDIT</button>` : ''}
+                        </div>
+                    </div>`;
                 list.appendChild(card);
             });
         }
 
-        // --- Cloud Logic ---
-
         async function sendToGoogleSheet() {
             if (journalEntries.length === 0) return showToast("Draft Kosong!", true);
             const btn = document.getElementById('btn-cloud'); btn.disabled = true; btn.innerText = "Mengirim...";
-            const data = journalEntries.map(e => ({ id: e.id, tgl: e.tgl, akt: e.items.map(it => `${it.desc} (${it.start}-${it.end})`).join('; '), dur: e.totalDur, cat: `${e.cat || '-'} | Ref: ${e.refMingguan || '-'}` }));
+            const data = journalEntries.map(e => ({ id: String(e.id), tgl: e.tgl, akt: e.items.map(it => `${it.desc} (${it.start}-${it.end})`).join('; '), dur: e.totalDur, cat: `${e.cat || '-'} | Ref: ${e.refMingguan || '-'}` }));
             try {
                 await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'sync', guru: profile, data: data }) });
                 showToast("Sinkronisasi Selesai!");
+                setTimeout(() => fetchTeacherData(profile.nip), 1000);
             } catch (e) { showToast("Gagal Sinkron", true); }
             finally { btn.disabled = false; btn.innerText = "Simpan ke Cloud"; }
         }
@@ -677,7 +678,7 @@
             if(!newPass) return showToast("Masukkan password baru!", true);
             showToast("Memperbarui...");
             try {
-                await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "change_password", role: role, new_password: newPass, changed_by: "Admin SDN Ulujami 06 Pagi" }) });
+                await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "change_password", role: role, new_password: newPass }) });
                 showToast("Password " + role + " diperbarui!");
                 document.getElementById('set-pass-new').value = '';
                 cloudPasswords[role] = newPass;
