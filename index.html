@@ -96,11 +96,17 @@
                     <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1 text-center">SDN Ulujami 06 Pagi</p>
                 </div>
 
-                <div class="mb-6 px-4 py-2 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Server Database</span>
-                    <div class="flex items-center gap-2">
-                        <span id="db-status-text" class="text-[9px] font-bold text-slate-400 uppercase">Checking...</span>
-                        <div id="db-status-dot" class="w-2 h-2 rounded-full bg-slate-300"></div>
+                <!-- Database Status Banner -->
+                <div id="status-banner" class="mb-6 px-4 py-2 rounded-xl bg-slate-50 border border-slate-100 flex flex-col gap-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Server Database</span>
+                        <div class="flex items-center gap-2">
+                            <span id="db-status-text" class="text-[9px] font-bold text-slate-400 uppercase">Checking...</span>
+                            <div id="db-status-dot" class="w-2 h-2 rounded-full bg-slate-300"></div>
+                        </div>
+                    </div>
+                    <div id="error-instruction" class="hidden text-[8px] text-red-500 font-bold leading-tight uppercase bg-red-50 p-2 rounded-lg border border-red-100">
+                        Peringatan: Skrip tidak menemukan lembar kerja. Pastikan Spreadsheet Anda memiliki tab bernama 'Database' dan 'Config'.
                     </div>
                 </div>
                 
@@ -187,7 +193,7 @@
                             <div class="space-y-2">
                                 <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Kegiatan & Waktu</label>
                                 <div id="activities-container" class="space-y-3 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
-                                    <!-- Baris default diinject JS -->
+                                    <!-- Baris diinject via JS -->
                                 </div>
                                 <button type="button" onclick="addActivityRow()" class="w-full mt-2 bg-indigo-50 text-indigo-600 py-2 rounded-xl text-[10px] font-bold hover:bg-indigo-100 transition-colors uppercase tracking-widest">+ Tambah Baris Baru</button>
                             </div>
@@ -278,18 +284,24 @@
                 </div>
             </div>
 
+            <!-- HISTORI GURU -->
             <div id="view-history" class="hidden space-y-6">
-                <div class="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                     <div>
-                        <h2 class="text-lg font-bold text-slate-800">Histori Jurnal Pribadi</h2>
-                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Pilih entri untuk diedit atau diduplikasi</p>
+                        <h2 class="text-lg font-bold text-slate-800">Histori Jurnal Cloud</h2>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Data sinkronisasi NIP: <span id="history-nip-display" class="text-indigo-600 font-black">...</span></p>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="fetchTeacherData(profile.nip)" class="bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-100 transition-all">Segarkan Data</button>
-                        <button onclick="clearAllData()" class="bg-red-50 text-red-600 px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-red-100 transition-all">Hapus Lokal</button>
+                        <button onclick="fetchTeacherData(profile.nip)" id="btn-refresh-history" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                            Segarkan Data
+                        </button>
+                        <button onclick="clearAllData()" class="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-red-100 transition-all">Reset Lokal</button>
                     </div>
                 </div>
-                <div id="history-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                <div id="history-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Cards diinject JS -->
+                </div>
             </div>
         </main>
     </div>
@@ -297,11 +309,12 @@
     <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl opacity-0 translate-y-10 transition-all duration-300 z-[100] text-[10px] font-bold uppercase tracking-widest"></div>
 
     <script>
+        // MASUKKAN URL GOOGLE APPS SCRIPT ANDA DI SINI
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz1UzMAtUqGyTaZ8w3vosuBZGoL-dVqkmzGXHVuuGJfMOUr_f8BG0oUDRgxb83o_HXD/exec";
+        
         let selectedRole = 'guru';
-        let journalEntries = [];
+        let journalEntries = []; 
         let profile = { nama: '', nip: '', jenis: 'Guru Kelas', mapel: '' };
-        let cloudDataRaw = [];
         let cloudPasswords = { guru: "guru123", kepsek: "admin123" };
         let editEntryId = null;
 
@@ -309,12 +322,13 @@
             if (!GAS_URL || GAS_URL.includes("URL_GOOGLE")) return;
             try {
                 const res = await fetch(GAS_URL);
+                if (!res.ok) throw new Error("Gagal terhubung ke server");
                 const result = await res.json();
                 if (result.status === "success" && result.data) {
                     const cont = document.getElementById('validation-ticker');
                     cont.innerHTML = '';
                     const validData = result.data.filter(r => r.status_validasi === 'Valid').sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 8);
-                    if (validData.length === 0) { cont.innerHTML = '<p class="text-white/40 text-[10px] italic">Belum ada validasi terbaru.</p>'; return; }
+                    if (validData.length === 0) { cont.innerHTML = '<p class="text-white/40 text-[10px] italic">Belum ada validasi.</p>'; return; }
                     validData.forEach(item => {
                         const div = document.createElement('div');
                         div.className = "p-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between transition-all hover:bg-white/10";
@@ -322,28 +336,52 @@
                         cont.appendChild(div);
                     });
                 }
-            } catch (e) { console.error("Ticker Error:", e); }
+            } catch (e) { 
+                console.error("Ticker Error:", e);
+            }
         }
 
         async function checkDatabaseConnection() {
             const text = document.getElementById('db-status-text');
             const dot = document.getElementById('db-status-dot');
+            const instruction = document.getElementById('error-instruction');
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000); 
+
             try {
-                const res = await fetch(GAS_URL);
+                const res = await fetch(GAS_URL, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                
+                if (!res.ok) throw new Error("HTTP Error");
+                
                 const result = await res.json();
                 if (result.status === "success") {
                     cloudPasswords = result.passwords;
-                    cloudDataRaw = result.data || [];
                     text.innerText = "Terhubung"; text.className = "text-[9px] font-bold text-green-600 uppercase";
                     dot.className = "w-2 h-2 rounded-full bg-green-500 pulse-valid";
+                    instruction.classList.add('hidden');
+                } else {
+                    throw new Error(result.message || "Kesalahan Server");
                 }
-            } catch (e) { text.innerText = "Terputus"; dot.className = "w-2 h-2 rounded-full bg-red-500"; }
+            } catch (e) { 
+                text.innerText = "Terputus"; 
+                text.className = "text-[9px] font-bold text-red-500 uppercase";
+                dot.className = "w-2 h-2 rounded-full bg-red-500"; 
+                if (e.message.includes("Sheet 'Database' atau 'Config' tidak ditemukan")) {
+                    instruction.classList.remove('hidden');
+                }
+            }
         }
 
         window.onload = () => { 
             checkDatabaseConnection(); 
             fetchValidationTicker(); 
             addActivityRow(); 
+            const savedProfile = localStorage.getItem('jurnal_profile');
+            if(savedProfile) profile = JSON.parse(savedProfile);
+            const savedEntries = localStorage.getItem('jurnal_entries');
+            if(savedEntries) journalEntries = JSON.parse(savedEntries);
         };
 
         function selectRole(role) {
@@ -355,61 +393,79 @@
 
         async function handleLogin() {
             const pass = document.getElementById('login-pass').value;
-            const nip = document.getElementById('login-nip').value.trim();
+            const nipInput = document.getElementById('login-nip').value.trim();
             const btn = document.getElementById('btn-login');
             const loader = document.getElementById('login-loader');
             const text = document.getElementById('login-text');
 
-            if (selectedRole === 'guru' && !nip) return showToast("Masukkan NIP Anda!", true);
+            if (selectedRole === 'guru' && !nipInput) return showToast("Masukkan NIP!", true);
             
             if ((selectedRole === 'guru' && pass === cloudPasswords.guru) || (selectedRole === 'kepsek' && pass === cloudPasswords.kepsek)) {
                 btn.disabled = true;
-                text.innerText = "Memuat Data...";
+                text.innerText = "Memuat...";
                 loader.classList.remove('hidden');
 
                 if (selectedRole === 'guru') {
-                    profile.nip = nip;
-                    await fetchTeacherData(nip);
+                    profile.nip = nipInput;
+                    await fetchTeacherData(nipInput);
                 }
 
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('main-dashboard').classList.remove('hidden');
                 document.getElementById('role-name').innerText = selectedRole === 'guru' ? 'Guru' : 'Kepala Sekolah';
                 initApp();
-            } else { showToast("Password atau ID Salah!", true); }
+            } else { showToast("Sandi/ID Salah!", true); }
         }
 
         async function fetchTeacherData(nip) {
+            const btnRefresh = document.getElementById('btn-refresh-history');
+            if(btnRefresh) btnRefresh.disabled = true;
+            
             try {
                 const res = await fetch(GAS_URL);
+                if (!res.ok) throw new Error("Gagal sinkron cloud");
                 const result = await res.json();
+                
                 if (result.status === "success") {
-                    cloudDataRaw = result.data;
-                    const filteredEntries = cloudDataRaw.filter(row => String(row.nip).replace(/'/g, "").trim() === String(nip).trim());
-                    journalEntries = filteredEntries.map(row => {
+                    const filtered = (result.data || []).filter(row => String(row.nip).replace(/'/g, "").trim() === String(nip).trim());
+                    
+                    journalEntries = filtered.map(row => {
                         const items = String(row.rincian_aktivitas).split('; ').map(it => {
                             const match = it.match(/(.*) \((.*)-(.*)\)/);
                             return match ? { desc: match[1], start: match[2], end: match[3] } : { desc: it, start: '', end: '' };
                         });
-                        return { id: row.id_jurnal, tgl: row.tanggal_aktivitas, weekId: getWeekIdentifier(row.tanggal_aktivitas), items: items, totalDur: row.durasi_menit, cat: row.catatan, refMingguan: row.catatan && row.catatan.includes('| Ref: ') ? row.catatan.split('| Ref: ')[1] : '', status: row.status_validasi };
+                        return { 
+                            id: String(row.id_jurnal), 
+                            tgl: row.tanggal_aktivitas, 
+                            weekId: getWeekIdentifier(row.tanggal_aktivitas), 
+                            items, 
+                            totalDur: row.durasi_menit, 
+                            cat: row.catatan, 
+                            refMingguan: row.catatan && row.catatan.includes('| Ref: ') ? row.catatan.split('| Ref: ')[1] : '', 
+                            status: row.status_validasi 
+                        };
                     });
-                    if (filteredEntries.length > 0) {
-                        const last = filteredEntries[filteredEntries.length - 1];
-                        profile.nama = last.nama_guru || '';
-                        profile.jenis = last.jenis_guru || 'Guru Kelas';
-                        profile.mapel = last.mata_pelajaran || '';
+
+                    if (filtered.length > 0) {
+                        const last = filtered.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+                        profile.nama = last.nama_guru || profile.nama;
+                        profile.jenis = last.jenis_guru || profile.jenis;
+                        profile.mapel = last.mata_pelajaran || profile.mapel;
                     }
+                    
                     localStorage.setItem('jurnal_entries', JSON.stringify(journalEntries));
                     localStorage.setItem('jurnal_profile', JSON.stringify(profile));
                     renderTable();
+                    renderHistoryCards();
+                    document.getElementById('history-nip-display').innerText = profile.nip;
+                    showToast("Histori Berhasil Disegarkan");
                 }
-            } catch (e) { showToast("Gagal memanggil data Cloud", true); }
-            finally {
-                if (document.getElementById('btn-login')) {
-                    document.getElementById('btn-login').disabled = false;
-                    document.getElementById('login-text').innerText = "Masuk Sistem";
-                    document.getElementById('login-loader').classList.add('hidden');
-                }
+            } catch (e) { 
+                showToast("Gagal Muat Cloud", true); 
+            } finally {
+                if(btnRefresh) btnRefresh.disabled = false;
+                const bl = document.getElementById('btn-login');
+                if(bl) { bl.disabled = false; document.getElementById('login-text').innerText = "Masuk Sistem"; document.getElementById('login-loader').classList.add('hidden'); }
             }
         }
 
@@ -452,113 +508,98 @@
             document.getElementById('view-history').classList.toggle('hidden', v !== 'history'); 
             document.getElementById('view-kepsek-report').classList.toggle('hidden', v !== 'report'); 
             document.getElementById('view-kepsek-settings').classList.toggle('hidden', v !== 'settings'); 
-            document.getElementById('btn-tab-input')?.classList.toggle('active-tab', v === 'input');
-            document.getElementById('btn-tab-history')?.classList.toggle('active-tab', v === 'history');
-            document.getElementById('btn-tab-report')?.classList.toggle('active-tab', v === 'report');
-            document.getElementById('btn-tab-settings')?.classList.toggle('active-tab', v === 'settings');
-            if (v === 'history') renderHistoryCards();
+            document.querySelectorAll('[id^="btn-tab"]').forEach(b => b.classList.remove('active-tab'));
+            document.getElementById('btn-tab-' + v)?.classList.add('active-tab');
+            if (v === 'history') { 
+                document.getElementById('history-nip-display').innerText = profile.nip; 
+                renderHistoryCards(); 
+            }
         }
 
         function addActivityRow(data = null) {
             const container = document.getElementById('activities-container');
             const row = document.createElement('div');
             row.className = "activity-row p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-2 relative group";
-            row.innerHTML = `
-                <div class="absolute top-2 right-2 flex gap-2 no-print">
-                    <button type="button" onclick="duplicateCurrentRow(this)" title="Duplikat baris" class="text-indigo-400 hover:text-indigo-600 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                    </button>
-                    <button type="button" onclick="this.closest('.activity-row').remove()" title="Hapus baris" class="text-red-300 hover:text-red-500 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                    </button>
-                </div>
-                <textarea placeholder="Rincian kegiatan..." required class="akt-desc w-full px-3 py-2 rounded-lg border border-slate-200 text-xs outline-none focus:ring-2 focus:ring-indigo-500 min-h-[60px] transition-all">${data ? data.desc : ''}</textarea>
-                <div class="flex items-center gap-2">
-                    <div class="flex flex-col flex-1">
-                        <span class="text-[8px] uppercase font-bold text-slate-400 ml-1">Mulai</span>
-                        <input type="time" required class="akt-start w-full px-2 py-1.5 rounded-lg border border-slate-200 text-xs outline-none" value="${data ? data.start : ''}">
-                    </div>
-                    <div class="flex flex-col flex-1">
-                        <span class="text-[8px] uppercase font-bold text-slate-400 ml-1">Selesai</span>
-                        <input type="time" required class="akt-end w-full px-2 py-1.5 rounded-lg border border-slate-200 text-xs outline-none" value="${data ? data.end : ''}">
-                    </div>
-                </div>`;
+            row.innerHTML = `<div class="absolute top-2 right-2 flex gap-2 no-print"><button type="button" onclick="duplicateCurrentRow(this)" title="Duplikat Baris" class="text-indigo-400 hover:text-indigo-600 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button><button type="button" onclick="this.closest('.activity-row').remove()" title="Hapus" class="text-red-300 hover:text-red-500 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div><textarea placeholder="Rincian kegiatan..." required class="akt-desc w-full px-3 py-2 rounded-lg border border-slate-200 text-xs outline-none focus:ring-2 focus:ring-indigo-500 min-h-[60px] transition-all">${data ? data.desc : ''}</textarea><div class="flex items-center gap-2"><div class="flex flex-col flex-1"><span class="text-[8px] uppercase font-bold text-slate-400 ml-1">Mulai</span><input type="time" required class="akt-start w-full px-2 py-1.5 rounded-lg border border-slate-200 text-xs outline-none" value="${data ? data.start : ''}"></div><div class="flex flex-col flex-1"><span class="text-[8px] uppercase font-bold text-slate-400 ml-1">Selesai</span><input type="time" required class="akt-end w-full px-2 py-1.5 rounded-lg border border-slate-200 text-xs outline-none" value="${data ? data.end : ''}"></div></div>`;
             container.appendChild(row);
             container.scrollTop = container.scrollHeight;
         }
 
         function duplicateCurrentRow(btn) {
             const row = btn.closest('.activity-row');
-            const data = { desc: row.querySelector('.akt-desc').value, start: row.querySelector('.akt-start').value, end: row.querySelector('.akt-end').value };
-            addActivityRow(data);
+            addActivityRow({ desc: row.querySelector('.akt-desc').value, start: row.querySelector('.akt-start').value, end: row.querySelector('.akt-end').value });
             showToast("Baris Diduplikasi");
         }
 
         function addEntry(e) {
             e.preventDefault();
             const date = document.getElementById('inp-tanggal').value;
-            const cat = document.getElementById('inp-catatan').value;
-            const refM = document.getElementById('inp-refleksi-mingguan').value;
             const items = [];
             let totalDur = 0;
             document.querySelectorAll('.activity-row').forEach(row => {
                 const desc = row.querySelector('.akt-desc').value;
                 const start = row.querySelector('.akt-start').value;
                 const end = row.querySelector('.akt-end').value;
-                if (desc && start && end) {
-                    const dur = calculateMinutes(start, end);
-                    items.push({ desc, start, end, duration: dur });
-                    totalDur += dur;
-                }
+                if (desc && start && end) { const dur = calculateMinutes(start, end); items.push({ desc, start, end, duration: dur }); totalDur += dur; }
             });
             if (items.length === 0) return showToast("Isi minimal 1 kegiatan!", true);
-            const newEntry = { id: editEntryId || Date.now(), tgl: date, weekId: getWeekIdentifier(date), items: items, totalDur: totalDur, cat: cat, refMingguan: refM, status: 'Belum Validasi' };
+            
+            // Simpan ID sebagai string untuk konsistensi
+            const idToSave = editEntryId ? String(editEntryId) : String(Date.now());
+            const entry = { id: idToSave, tgl: date, weekId: getWeekIdentifier(date), items, totalDur, cat: document.getElementById('inp-catatan').value, refMingguan: document.getElementById('inp-refleksi-mingguan').value, status: 'Belum Validasi' };
+            
             if (editEntryId) { 
-                const idx = journalEntries.findIndex(e => e.id === editEntryId); 
-                if(journalEntries[idx].status === "Valid") return showToast("Sudah Valid! Gagal Edit.", true);
-                journalEntries[idx] = newEntry; 
+                const idx = journalEntries.findIndex(e => String(e.id) === String(editEntryId)); 
+                if(idx !== -1 && journalEntries[idx].status === "Valid") return showToast("Sudah Valid! Tidak dapat diubah.", true);
+                if(idx !== -1) journalEntries[idx] = entry; 
                 cancelEdit(); 
-            } else journalEntries.push(newEntry);
+            } else {
+                journalEntries.push(entry);
+            }
+            
             localStorage.setItem('jurnal_entries', JSON.stringify(journalEntries));
             renderTable();
             document.getElementById('jurnal-form').reset();
-            document.getElementById('activities-container').innerHTML = ''; 
-            addActivityRow(); 
-            checkFriday();
-            showToast("Data Tersimpan Lokal");
+            document.getElementById('activities-container').innerHTML = ''; addActivityRow(); checkFriday();
+            showToast(editEntryId ? "Perubahan Disimpan Lokal" : "Data Baru Disimpan Lokal");
         }
 
         function editEntry(id) {
-            const entry = journalEntries.find(e => e.id === id);
-            if (!entry || entry.status === "Valid") return showToast("Sudah Valid! Tidak bisa diedit.", true);
-            editEntryId = id;
-            populateFormFromEntry(entry);
+            const entry = journalEntries.find(e => String(e.id) === String(id));
+            if (!entry || entry.status === "Valid") return showToast("Data Valid tidak dapat diedit.", true);
+            editEntryId = String(id);
+            populateForm(entry);
             document.getElementById('edit-indicator').classList.remove('hidden');
             document.getElementById('btn-cancel-edit').classList.remove('hidden');
             document.getElementById('btn-submit-jurnal').innerText = "Perbarui Data";
         }
 
-        // --- FITUR DUPLIKAT DARI HISTORI ---
         function duplicateFromHistory(id) {
-            const entry = journalEntries.find(e => e.id === id);
+            const entry = journalEntries.find(e => String(e.id) === String(id));
             if (!entry) return;
-            editEntryId = null; // Pastikan ini entri baru, bukan timpa yang lama
-            populateFormFromEntry(entry);
+            editEntryId = null; // Menandakan ini entri baru (duplikasi)
+            populateForm(entry);
             document.getElementById('edit-indicator').classList.add('hidden');
             document.getElementById('btn-cancel-edit').classList.add('hidden');
             document.getElementById('btn-submit-jurnal').innerText = "Simpan Laporan";
-            showToast("Data Histori Disalin ke Formulir");
+            
+            // Fokuskan ke kolom tanggal agar user tahu mereka bisa ganti tanggal
+            setTimeout(() => {
+                const dateInp = document.getElementById('inp-tanggal');
+                dateInp.focus();
+                showToast("Data Disalin! Silakan tentukan tanggal baru.");
+            }, 500);
         }
 
-        function populateFormFromEntry(entry) {
+        function populateForm(entry) {
             switchView('input');
-            document.getElementById('form-container').scrollIntoView({ behavior: 'smooth' });
             document.getElementById('inp-tanggal').value = entry.tgl;
             document.getElementById('inp-catatan').value = entry.cat;
             document.getElementById('inp-refleksi-mingguan').value = entry.refMingguan || '';
             document.getElementById('activities-container').innerHTML = '';
             entry.items.forEach(it => addActivityRow(it));
             checkFriday();
+            document.getElementById('form-container').scrollIntoView({ behavior: 'smooth' });
         }
 
         function cancelEdit() {
@@ -567,63 +608,62 @@
             document.getElementById('btn-cancel-edit').classList.add('hidden');
             document.getElementById('btn-submit-jurnal').innerText = "Simpan Laporan";
             document.getElementById('jurnal-form').reset();
-            document.getElementById('activities-container').innerHTML = '';
-            addActivityRow();
+            document.getElementById('activities-container').innerHTML = ''; addActivityRow();
         }
 
         function removeEntry(id) {
-            const entry = journalEntries.find(e => e.id === id);
+            const entry = journalEntries.find(e => String(e.id) === String(id));
             if (entry && entry.status === "Valid") return showToast("Data Valid tidak bisa dihapus!", true);
-            journalEntries = journalEntries.filter(e => e.id !== id);
+            journalEntries = journalEntries.filter(e => String(e.id) !== String(id));
             localStorage.setItem('jurnal_entries', JSON.stringify(journalEntries));
             renderTable();
+            renderHistoryCards();
         }
 
         function calculateMinutes(s, e) { const [sh, sm] = s.split(':').map(Number); const [eh, em] = e.split(':').map(Number); let d = (eh * 60 + em) - (sh * 60 + sm); return d > 0 ? d : 0; }
         function formatDateShort(d) { try { return new Date(d).toLocaleDateString('id-ID', { weekday:'short', day:'numeric', month:'short' }); } catch { return d; } }
-        function getWeekIdentifier(dateStr) { const date = new Date(dateStr); const day = date.getDay(); const diff = date.getDate() - day + (day === 0 ? -6 : 1); const monday = new Date(date.setDate(diff)); return monday.toISOString().split('T')[0]; }
-        function checkFriday() { const val = document.getElementById('inp-tanggal').value; if(!val) return; const date = new Date(val); const cont = document.getElementById('friday-reflection-container'); if (date.getDay() === 5) cont.classList.remove('hidden'); else cont.classList.add('hidden'); }
+        function getWeekIdentifier(dateStr) { const date = new Date(dateStr); const day = date.getDay(); const diff = date.getDate() - day + (day === 0 ? -6 : 1); const mon = new Date(date.setDate(diff)); return mon.toISOString().split('T')[0]; }
+        function checkFriday() { const v = document.getElementById('inp-tanggal').value; if(!v) return; const d = new Date(v); document.getElementById('friday-reflection-container').classList.toggle('hidden', d.getDay() !== 5); }
         function handleLogout() { location.reload(); }
 
         function renderTable() {
-            const container = document.getElementById('output-container');
-            container.innerHTML = '';
-            if (journalEntries.length === 0) return container.innerHTML = `<div class="bg-white p-8 text-center text-slate-400 font-bold uppercase text-[10px] border-2 border-dashed rounded-3xl">Belum ada data.</div>`;
-            const groups = {};
-            journalEntries.forEach(e => { if (!groups[e.weekId]) groups[e.weekId] = []; groups[e.weekId].push(e); });
-            Object.keys(groups).sort().forEach(weekId => {
-                const weekEntries = groups[weekId].sort((a,b) => new Date(a.tgl) - new Date(b.tgl));
-                const refMingguanText = weekEntries.find(e => e.refMingguan && e.refMingguan.trim() !== "")?.refMingguan;
+            const cont = document.getElementById('output-container');
+            cont.innerHTML = '';
+            if (journalEntries.length === 0) return cont.innerHTML = `<div class="bg-white p-8 text-center text-slate-400 font-bold text-[10px] border-2 border-dashed rounded-3xl">Kosong.</div>`;
+            const groups = {}; journalEntries.forEach(e => { if (!groups[e.weekId]) groups[e.weekId] = []; groups[e.weekId].push(e); });
+            Object.keys(groups).sort().forEach(wid => {
+                const weekEntries = groups[wid].sort((a,b) => new Date(a.tgl) - new Date(b.tgl));
+                const ref = weekEntries.find(e => e.refMingguan && e.refMingguan.trim() !== "")?.refMingguan;
                 const div = document.createElement('div');
                 div.className = "paper";
-                div.innerHTML = `<div class="text-center mb-8 border-b-2 border-black pb-4"><h2 class="text-lg font-bold uppercase leading-tight mb-1 tracking-tight">Jurnal Harian Aktivitas Pendidik</h2><p class="text-[9pt] italic font-medium">SDN Ulujami 06 Pagi - Pesanggrahan, Jakarta Selatan</p></div><div class="grid grid-cols-2 gap-4 mb-6 text-[10pt]"><div class="space-y-1"><div class="flex"><span class="w-24 font-bold">Nama</span>: <span class="ml-2">${profile.nama || '...'}</span></div><div class="flex"><span class="w-24 font-bold">NIP</span>: <span class="ml-2">${profile.nip || '...'}</span></div></div><div class="space-y-1"><div class="flex"><span class="w-24 font-bold">Jenis</span>: <span class="ml-2">${profile.jenis || '...'}</span></div>${profile.jenis === "Guru Mata Pelajaran" ? `<div class="flex"><span class="w-24 font-bold">Mapel</span>: <span class="ml-2">${profile.mapel || '...'}</span></div>` : ''}</div></div><table class="w-full border-collapse border border-black text-[8pt]"><thead class="bg-slate-50"><tr><th class="border border-black p-2 w-8">No</th><th class="border border-black p-2 w-24">Tanggal</th><th class="border border-black p-2">Rincian Aktivitas & Waktu</th><th class="border border-black p-2 w-12 text-center">Dur</th><th class="border border-black p-2">Catatan</th><th class="border border-black p-2 no-print w-14">Aksi</th></tr></thead><tbody>${weekEntries.map((e, i) => `<tr><td class="border border-black p-2 text-center">${i+1}</td><td class="border border-black p-2 font-bold">${formatDateShort(e.tgl)}</td><td class="border border-black p-2"><ul>${e.items.map(it => `<li>• ${it.desc} <span class="text-[7pt] font-bold text-indigo-600">(${it.start}-${it.end})</span></li>`).join('')}</ul></td><td class="border border-black p-2 text-center font-bold">${e.totalDur}'</td><td class="border border-black p-2 text-[7pt]">${e.cat || '-'}</td><td class="border border-black p-2 text-center no-print">${e.status !== 'Valid' ? `<div class="flex gap-1 justify-center"><button onclick="editEntry(${e.id})" class="text-indigo-600 hover:scale-110">✎</button><button onclick="removeEntry(${e.id})" class="text-red-500 hover:scale-110">×</button></div>` : `<span class="text-green-600 font-bold">OK</span>`}</td></tr>`).join('')}</tbody></table>${refMingguanText ? `<div class="mt-4 p-3 border border-black rounded text-[9pt]"><p class="font-bold underline uppercase mb-1">Refleksi Mingguan:</p><p class="italic">${refMingguanText}</p></div>` : ''}<div class="mt-12 grid grid-cols-2 gap-10 text-[9pt]"><div class="text-center"><p class="mb-16">Mengetahui,<br>Kepala Sekolah</p><p class="font-bold underline">................................</p><p>NIP. ................................</p></div><div class="text-center"><p class="mb-16">Jakarta, ${new Intl.DateTimeFormat('id-ID', { dateStyle: 'long' }).format(new Date())}<br>Guru Bersangkutan</p><p class="font-bold underline">${profile.nama || '................................'}</p><p>NIP. ${profile.nip || '................................'}</p></div></div>`;
-                container.appendChild(div);
+                div.innerHTML = `<div class="text-center mb-8 border-b-2 border-black pb-4"><h2 class="text-lg font-bold uppercase tracking-tight mb-1">Jurnal Harian Aktivitas Pendidik</h2><p class="text-[9pt] italic">SDN Ulujami 06 Pagi</p></div><div class="grid grid-cols-2 gap-4 mb-6 text-[10pt]"><div class="space-y-1"><div class="flex"><span class="w-24 font-bold">Nama</span>: <span class="ml-2">${profile.nama || '...'}</span></div><div class="flex"><span class="w-24 font-bold">NIP</span>: <span class="ml-2">${profile.nip || '...'}</span></div></div><div class="space-y-1"><div class="flex"><span class="w-24 font-bold">Jenis</span>: <span class="ml-2">${profile.jenis || '...'}</span></div>${profile.jenis === "Guru Mata Pelajaran" ? `<div class="flex"><span class="w-24 font-bold">Mapel</span>: <span class="ml-2">${profile.mapel || '...'}</span></div>` : ''}</div></div><table class="w-full border-collapse border border-black text-[8pt]"><thead class="bg-slate-50"><tr><th class="border border-black p-2 w-8">No</th><th class="border border-black p-2 w-24">Tanggal</th><th class="border border-black p-2">Aktivitas & Waktu</th><th class="border border-black p-2 w-12 text-center">Dur</th><th class="border border-black p-2">Catatan</th><th class="border border-black p-2 no-print w-14">Aksi</th></tr></thead><tbody>${weekEntries.map((e, i) => `<tr><td class="border border-black p-2 text-center">${i+1}</td><td class="border border-black p-2 font-bold">${formatDateShort(e.tgl)}</td><td class="border border-black p-2"><ul>${e.items.map(it => `<li>• ${it.desc} <span class="text-[7pt] font-bold text-indigo-600">(${it.start}-${it.end})</span></li>`).join('')}</ul></td><td class="border border-black p-2 text-center font-bold">${e.totalDur}'</td><td class="border border-black p-2 text-[7pt]">${e.cat || '-'}</td><td class="border border-black p-2 text-center no-print">${e.status !== 'Valid' ? `<div class="flex gap-1 justify-center"><button onclick="editEntry('${e.id}')" class="text-indigo-600">✎</button><button onclick="removeEntry('${e.id}')" class="text-red-500">×</button></div>` : `<span class="text-green-600 font-bold">OK</span>`}</td></tr>`).join('')}</tbody></table>${ref ? `<div class="mt-4 p-3 border border-black rounded text-[9pt]"><p class="font-bold underline uppercase mb-1">Refleksi:</p><p class="italic">${ref}</p></div>` : ''}<div class="mt-12 grid grid-cols-2 gap-10 text-[9pt] text-center"><div><p class="mb-16">Mengetahui,<br>Kepala Sekolah</p><p class="font-bold underline">................................</p></div><div><p class="mb-16">Jakarta, ${new Intl.DateTimeFormat('id-ID', { dateStyle: 'long' }).format(new Date())}<br>Guru Bersangkutan</p><p class="font-bold underline">${profile.nama || '...'}</p><p>NIP. ${profile.nip || '...'}</p></div></div>`;
+                cont.appendChild(div);
             });
         }
 
         function renderHistoryCards() {
             const list = document.getElementById('history-cards-container');
-            list.innerHTML = journalEntries.length === 0 ? `<div class="col-span-full py-20 text-center text-slate-400 font-bold uppercase text-[10px]">Kosong</div>` : '';
-            journalEntries.forEach(e => {
+            list.innerHTML = journalEntries.length === 0 ? `<div class="col-span-full py-20 text-center text-slate-400 font-bold uppercase text-[10px]">Cloud Kosong.</div>` : '';
+            
+            [...journalEntries].sort((a,b) => new Date(b.tgl) - new Date(a.tgl)).forEach(e => {
+                const isValid = String(e.status).toLowerCase().trim() === "valid";
                 const card = document.createElement('div');
-                const isValid = e.status === "Valid";
                 card.className = "bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden transition-all hover:shadow-md";
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-3">
-                        <span class="text-[9px] font-bold bg-indigo-100 text-indigo-700 px-2 py-1 rounded-md uppercase tracking-wider">${formatDateShort(e.tgl)}</span>
+                        <span class="text-[9px] font-bold bg-indigo-100 text-indigo-700 px-2 py-1 rounded-md uppercase">${formatDateShort(e.tgl)}</span>
                         <div class="flex flex-col items-end">
-                            <span class="text-[9px] text-slate-400 font-bold uppercase">${e.totalDur} MENIT</span>
-                            <span class="text-[8px] font-black uppercase tracking-tighter ${isValid ? 'text-green-600' : 'text-slate-400'}">${e.status}</span>
+                            <span class="text-[9px] text-slate-400 font-bold">${e.totalDur}M</span>
+                            <span class="text-[8px] font-black uppercase ${isValid ? 'text-green-600' : 'text-slate-400'}">${e.status}</span>
                         </div>
                     </div>
                     <ul class="text-[11px] text-slate-600 mb-3 space-y-1">
-                        ${e.items.map(it => `<li>- ${it.desc}</li>`).join('')}
+                        ${e.items.map(it => `<li class="truncate">- ${it.desc}</li>`).join('')}
                     </ul>
                     <div class="pt-2 border-t border-slate-100 flex justify-between items-center">
-                        <p class="text-[10px] text-slate-400 font-medium truncate max-w-[120px]">Catatan: ${e.cat || '-'}</p>
                         <div class="flex gap-3">
-                            <button onclick="duplicateFromHistory(${e.id})" class="text-[10px] font-bold text-indigo-600 hover:underline uppercase">Duplikat</button>
-                            ${!isValid ? `<button onclick="editEntry(${e.id})" class="text-[10px] font-bold text-slate-600 hover:underline uppercase">EDIT</button>` : ''}
+                            <button onclick="duplicateFromHistory('${e.id}')" class="text-[10px] font-bold text-indigo-600 hover:underline uppercase">Duplikat</button>
+                            ${!isValid ? `<button onclick="editEntry('${e.id}')" class="text-[10px] font-bold text-slate-600 hover:underline uppercase">EDIT</button>` : ''}
                         </div>
                     </div>`;
                 list.appendChild(card);
@@ -631,13 +671,13 @@
         }
 
         async function sendToGoogleSheet() {
-            if (journalEntries.length === 0) return showToast("Draft Kosong!", true);
+            if (journalEntries.length === 0) return showToast("Draf Kosong!", true);
             const btn = document.getElementById('btn-cloud'); btn.disabled = true; btn.innerText = "Mengirim...";
             const data = journalEntries.map(e => ({ id: String(e.id), tgl: e.tgl, akt: e.items.map(it => `${it.desc} (${it.start}-${it.end})`).join('; '), dur: e.totalDur, cat: `${e.cat || '-'} | Ref: ${e.refMingguan || '-'}` }));
             try {
                 await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'sync', guru: profile, data: data }) });
-                showToast("Sinkronisasi Selesai!");
-                setTimeout(() => fetchTeacherData(profile.nip), 1000);
+                showToast("Berhasil Sinkron!");
+                setTimeout(() => fetchTeacherData(profile.nip), 1500);
             } catch (e) { showToast("Gagal Sinkron", true); }
             finally { btn.disabled = false; btn.innerText = "Simpan ke Cloud"; }
         }
@@ -647,25 +687,23 @@
             try {
                 const res = await fetch(GAS_URL);
                 const result = await res.json();
-                if (result.status === "success" && result.data) { cloudDataRaw = result.data; renderCloudTable(cloudDataRaw); showToast("Data Cloud Dimuat"); }
-            } catch (e) { showToast("Gagal ambil data", true); }
+                if (result.status === "success") { renderCloudTable(result.data || []); showToast("Data KS Dimuat"); }
+            } catch (e) { showToast("Gagal Muat", true); }
             finally { btn.disabled = false; btn.innerText = "Segarkan"; }
         }
 
         function renderCloudTable(data) {
-            const body = document.getElementById('cloud-table-body');
-            body.innerHTML = '';
+            const body = document.getElementById('cloud-table-body'); body.innerHTML = '';
             data.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).forEach((row, i) => {
-                const isValid = row.status_validasi === "Valid";
-                const tr = document.createElement('tr');
-                if(isValid) tr.className = "row-valid";
+                const isValid = String(row.status_validasi).toLowerCase().trim() === "valid";
+                const tr = document.createElement('tr'); if(isValid) tr.className = "row-valid";
                 tr.innerHTML = `<td class="px-5 py-4 text-slate-400 font-bold">${i+1}</td><td class="px-5 py-4"><div class="font-bold text-slate-800">${row.nama_guru}</div><div class="text-[9px] text-slate-400 font-bold">${row.nip}</div></td><td class="px-5 py-4 font-bold text-slate-600">${formatDateShort(row.tanggal_aktivitas)}</td><td class="px-5 py-4 text-slate-600 max-w-xs truncate" title="${row.rincian_aktivitas}">${row.rincian_aktivitas}</td><td class="px-5 py-4 text-center font-bold text-indigo-700">${row.durasi_menit}'</td><td class="px-5 py-4"><span class="text-[9px] font-black uppercase ${isValid ? 'text-green-600' : 'text-slate-300'}">${row.status_validasi}</span></td><td class="px-5 py-4 text-center">${!isValid ? `<button onclick="validateData('${row.timestamp}', '${row.nama_guru}')" class="bg-green-600 text-white px-3 py-1 rounded-lg text-[10px] font-bold">Validasi</button>` : `<span class="text-green-600 font-bold">OK</span>`}</td>`;
                 body.appendChild(tr);
             });
         }
 
         async function validateData(ts, name) {
-            if(!confirm("Validasi laporan ini?")) return;
+            if(!confirm("Validasi?")) return;
             try {
                 await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'validate', timestamp: ts, nama_guru: name }) });
                 showToast("Divalidasi!"); fetchSpreadsheetData();
@@ -675,18 +713,27 @@
         async function changePassword() {
             const role = document.getElementById('set-pass-role').value;
             const newPass = document.getElementById('set-pass-new').value;
-            if(!newPass) return showToast("Masukkan password baru!", true);
-            showToast("Memperbarui...");
+            if(!newPass) return showToast("Masukkan sandi baru!", true);
             try {
                 await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "change_password", role: role, new_password: newPass }) });
-                showToast("Password " + role + " diperbarui!");
-                document.getElementById('set-pass-new').value = '';
-                cloudPasswords[role] = newPass;
-            } catch (e) { showToast("Gagal merubah password", true); }
+                showToast("Sandi " + role + " diperbarui!"); document.getElementById('set-pass-new').value = ''; cloudPasswords[role] = newPass;
+            } catch (e) { showToast("Gagal", true); }
         }
 
         function showToast(m, isErr = false) { const t = document.getElementById('toast'); t.innerText = m; t.className = `fixed bottom-10 left-1/2 -translate-x-1/2 text-white px-6 py-3 rounded-2xl shadow-2xl transition-all duration-300 z-[100] text-[10px] font-bold uppercase tracking-widest ${isErr ? 'bg-red-600' : 'bg-slate-900'}`; t.classList.replace('opacity-0', 'opacity-100'); t.classList.replace('translate-y-10', 'translate-y-0'); setTimeout(() => { t.classList.replace('opacity-100', 'opacity-0'); t.classList.replace('translate-y-0', 'translate-y-10'); }, 3000); }
-        function clearAllData() { if (confirm("Hapus histori pribadi di perangkat ini?")) { journalEntries = []; localStorage.removeItem('jurnal_entries'); renderHistoryCards(); renderTable(); showToast("Histori Lokal Bersih"); } }
+        
+        function clearAllData() { 
+            if (confirm("Reset data lokal? Histori cloud tetap aman.")) { 
+                journalEntries = []; 
+                localStorage.removeItem('jurnal_entries'); 
+                if(profile.nip) {
+                    fetchTeacherData(profile.nip); 
+                } else {
+                    renderHistoryCards(); renderTable(); 
+                    showToast("Lokal Direset");
+                }
+            } 
+        }
     </script>
 </body>
 </html>
