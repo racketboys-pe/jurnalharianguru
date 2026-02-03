@@ -193,7 +193,7 @@
                             <div class="space-y-2">
                                 <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Kegiatan & Waktu</label>
                                 <div id="activities-container" class="space-y-3 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
-                                    <!-- Baris diinject via JS -->
+                                    <!-- Baris diinject JS -->
                                 </div>
                                 <button type="button" onclick="addActivityRow()" class="w-full mt-2 bg-indigo-50 text-indigo-600 py-2 rounded-xl text-[10px] font-bold hover:bg-indigo-100 transition-colors uppercase tracking-widest">+ Tambah Baris Baru</button>
                             </div>
@@ -309,7 +309,6 @@
     <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl opacity-0 translate-y-10 transition-all duration-300 z-[100] text-[10px] font-bold uppercase tracking-widest"></div>
 
     <script>
-        // MASUKKAN URL GOOGLE APPS SCRIPT ANDA DI SINI
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz1UzMAtUqGyTaZ8w3vosuBZGoL-dVqkmzGXHVuuGJfMOUr_f8BG0oUDRgxb83o_HXD/exec";
         
         let selectedRole = 'guru';
@@ -336,25 +335,20 @@
                         cont.appendChild(div);
                     });
                 }
-            } catch (e) { 
-                console.error("Ticker Error:", e);
-            }
+            } catch (e) { console.error("Ticker Error:", e); }
         }
 
         async function checkDatabaseConnection() {
             const text = document.getElementById('db-status-text');
             const dot = document.getElementById('db-status-dot');
             const instruction = document.getElementById('error-instruction');
-            
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 8000); 
 
             try {
                 const res = await fetch(GAS_URL, { signal: controller.signal });
                 clearTimeout(timeoutId);
-                
                 if (!res.ok) throw new Error("HTTP Error");
-                
                 const result = await res.json();
                 if (result.status === "success") {
                     cloudPasswords = result.passwords;
@@ -368,9 +362,7 @@
                 text.innerText = "Terputus"; 
                 text.className = "text-[9px] font-bold text-red-500 uppercase";
                 dot.className = "w-2 h-2 rounded-full bg-red-500"; 
-                if (e.message.includes("Sheet 'Database' atau 'Config' tidak ditemukan")) {
-                    instruction.classList.remove('hidden');
-                }
+                if (e.message.includes("Sheet 'Database' atau 'Config' tidak ditemukan")) { instruction.classList.remove('hidden'); }
             }
         }
 
@@ -399,17 +391,9 @@
             const text = document.getElementById('login-text');
 
             if (selectedRole === 'guru' && !nipInput) return showToast("Masukkan NIP!", true);
-            
             if ((selectedRole === 'guru' && pass === cloudPasswords.guru) || (selectedRole === 'kepsek' && pass === cloudPasswords.kepsek)) {
-                btn.disabled = true;
-                text.innerText = "Memuat...";
-                loader.classList.remove('hidden');
-
-                if (selectedRole === 'guru') {
-                    profile.nip = nipInput;
-                    await fetchTeacherData(nipInput);
-                }
-
+                btn.disabled = true; text.innerText = "Memuat..."; loader.classList.remove('hidden');
+                if (selectedRole === 'guru') { profile.nip = nipInput; await fetchTeacherData(nipInput); }
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('main-dashboard').classList.remove('hidden');
                 document.getElementById('role-name').innerText = selectedRole === 'guru' ? 'Guru' : 'Kepala Sekolah';
@@ -420,15 +404,12 @@
         async function fetchTeacherData(nip) {
             const btnRefresh = document.getElementById('btn-refresh-history');
             if(btnRefresh) btnRefresh.disabled = true;
-            
             try {
                 const res = await fetch(GAS_URL);
                 if (!res.ok) throw new Error("Gagal sinkron cloud");
                 const result = await res.json();
-                
                 if (result.status === "success") {
                     const filtered = (result.data || []).filter(row => String(row.nip).replace(/'/g, "").trim() === String(nip).trim());
-                    
                     journalEntries = filtered.map(row => {
                         const items = String(row.rincian_aktivitas).split('; ').map(it => {
                             const match = it.match(/(.*) \((.*)-(.*)\)/);
@@ -436,7 +417,7 @@
                         });
                         return { 
                             id: String(row.id_jurnal), 
-                            tgl: row.tanggal_aktivitas, 
+                            tgl: row.tanggal_aktivitas, // Gunakan tanggal asli dari DB
                             weekId: getWeekIdentifier(row.tanggal_aktivitas), 
                             items, 
                             totalDur: row.durasi_menit, 
@@ -445,24 +426,19 @@
                             status: row.status_validasi 
                         };
                     });
-
                     if (filtered.length > 0) {
                         const last = filtered.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
                         profile.nama = last.nama_guru || profile.nama;
                         profile.jenis = last.jenis_guru || profile.jenis;
                         profile.mapel = last.mata_pelajaran || profile.mapel;
                     }
-                    
                     localStorage.setItem('jurnal_entries', JSON.stringify(journalEntries));
                     localStorage.setItem('jurnal_profile', JSON.stringify(profile));
-                    renderTable();
-                    renderHistoryCards();
+                    renderTable(); renderHistoryCards();
                     document.getElementById('history-nip-display').innerText = profile.nip;
                     showToast("Histori Berhasil Disegarkan");
                 }
-            } catch (e) { 
-                showToast("Gagal Muat Cloud", true); 
-            } finally {
+            } catch (e) { showToast("Gagal Muat Cloud", true); } finally {
                 if(btnRefresh) btnRefresh.disabled = false;
                 const bl = document.getElementById('btn-login');
                 if(bl) { bl.disabled = false; document.getElementById('login-text').innerText = "Masuk Sistem"; document.getElementById('login-loader').classList.add('hidden'); }
@@ -494,11 +470,8 @@
         }
 
         function saveProfile() { 
-            profile.nama = document.getElementById('prof-nama').value; 
-            profile.jenis = document.getElementById('prof-jenis').value; 
-            profile.mapel = document.getElementById('prof-mapel').value; 
-            localStorage.setItem('jurnal_profile', JSON.stringify(profile)); 
-            renderTable(); 
+            profile.nama = document.getElementById('prof-nama').value; profile.jenis = document.getElementById('prof-jenis').value; profile.mapel = document.getElementById('prof-mapel').value; 
+            localStorage.setItem('jurnal_profile', JSON.stringify(profile)); renderTable(); 
         }
 
         function toggleMapel() { document.getElementById('prof-mapel').classList.toggle('hidden', document.getElementById('prof-jenis').value !== "Guru Mata Pelajaran"); }
@@ -510,10 +483,7 @@
             document.getElementById('view-kepsek-settings').classList.toggle('hidden', v !== 'settings'); 
             document.querySelectorAll('[id^="btn-tab"]').forEach(b => b.classList.remove('active-tab'));
             document.getElementById('btn-tab-' + v)?.classList.add('active-tab');
-            if (v === 'history') { 
-                document.getElementById('history-nip-display').innerText = profile.nip; 
-                renderHistoryCards(); 
-            }
+            if (v === 'history') { document.getElementById('history-nip-display').innerText = profile.nip; renderHistoryCards(); }
         }
 
         function addActivityRow(data = null) {
@@ -521,8 +491,7 @@
             const row = document.createElement('div');
             row.className = "activity-row p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-2 relative group";
             row.innerHTML = `<div class="absolute top-2 right-2 flex gap-2 no-print"><button type="button" onclick="duplicateCurrentRow(this)" title="Duplikat Baris" class="text-indigo-400 hover:text-indigo-600 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button><button type="button" onclick="this.closest('.activity-row').remove()" title="Hapus" class="text-red-300 hover:text-red-500 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div><textarea placeholder="Rincian kegiatan..." required class="akt-desc w-full px-3 py-2 rounded-lg border border-slate-200 text-xs outline-none focus:ring-2 focus:ring-indigo-500 min-h-[60px] transition-all">${data ? data.desc : ''}</textarea><div class="flex items-center gap-2"><div class="flex flex-col flex-1"><span class="text-[8px] uppercase font-bold text-slate-400 ml-1">Mulai</span><input type="time" required class="akt-start w-full px-2 py-1.5 rounded-lg border border-slate-200 text-xs outline-none" value="${data ? data.start : ''}"></div><div class="flex flex-col flex-1"><span class="text-[8px] uppercase font-bold text-slate-400 ml-1">Selesai</span><input type="time" required class="akt-end w-full px-2 py-1.5 rounded-lg border border-slate-200 text-xs outline-none" value="${data ? data.end : ''}"></div></div>`;
-            container.appendChild(row);
-            container.scrollTop = container.scrollHeight;
+            container.appendChild(row); container.scrollTop = container.scrollHeight;
         }
 
         function duplicateCurrentRow(btn) {
@@ -543,32 +512,23 @@
                 if (desc && start && end) { const dur = calculateMinutes(start, end); items.push({ desc, start, end, duration: dur }); totalDur += dur; }
             });
             if (items.length === 0) return showToast("Isi minimal 1 kegiatan!", true);
-            
-            // Simpan ID sebagai string untuk konsistensi
             const idToSave = editEntryId ? String(editEntryId) : String(Date.now());
             const entry = { id: idToSave, tgl: date, weekId: getWeekIdentifier(date), items, totalDur, cat: document.getElementById('inp-catatan').value, refMingguan: document.getElementById('inp-refleksi-mingguan').value, status: 'Belum Validasi' };
-            
             if (editEntryId) { 
                 const idx = journalEntries.findIndex(e => String(e.id) === String(editEntryId)); 
                 if(idx !== -1 && journalEntries[idx].status === "Valid") return showToast("Sudah Valid! Tidak dapat diubah.", true);
-                if(idx !== -1) journalEntries[idx] = entry; 
-                cancelEdit(); 
-            } else {
-                journalEntries.push(entry);
-            }
-            
+                if(idx !== -1) journalEntries[idx] = entry; cancelEdit(); 
+            } else { journalEntries.push(entry); }
             localStorage.setItem('jurnal_entries', JSON.stringify(journalEntries));
-            renderTable();
-            document.getElementById('jurnal-form').reset();
+            renderTable(); document.getElementById('jurnal-form').reset();
             document.getElementById('activities-container').innerHTML = ''; addActivityRow(); checkFriday();
-            showToast(editEntryId ? "Perubahan Disimpan Lokal" : "Data Baru Disimpan Lokal");
+            showToast(editEntryId ? "Perubahan Disimpan" : "Laporan Baru Disimpan");
         }
 
         function editEntry(id) {
             const entry = journalEntries.find(e => String(e.id) === String(id));
-            if (!entry || entry.status === "Valid") return showToast("Data Valid tidak dapat diedit.", true);
-            editEntryId = String(id);
-            populateForm(entry);
+            if (!entry || entry.status === "Valid") return showToast("Sudah Valid! Tidak dapat diedit.", true);
+            editEntryId = String(id); populateForm(entry);
             document.getElementById('edit-indicator').classList.remove('hidden');
             document.getElementById('btn-cancel-edit').classList.remove('hidden');
             document.getElementById('btn-submit-jurnal').innerText = "Perbarui Data";
@@ -577,18 +537,11 @@
         function duplicateFromHistory(id) {
             const entry = journalEntries.find(e => String(e.id) === String(id));
             if (!entry) return;
-            editEntryId = null; // Menandakan ini entri baru (duplikasi)
-            populateForm(entry);
+            editEntryId = null; populateForm(entry);
             document.getElementById('edit-indicator').classList.add('hidden');
             document.getElementById('btn-cancel-edit').classList.add('hidden');
             document.getElementById('btn-submit-jurnal').innerText = "Simpan Laporan";
-            
-            // Fokuskan ke kolom tanggal agar user tahu mereka bisa ganti tanggal
-            setTimeout(() => {
-                const dateInp = document.getElementById('inp-tanggal');
-                dateInp.focus();
-                showToast("Data Disalin! Silakan tentukan tanggal baru.");
-            }, 500);
+            setTimeout(() => { document.getElementById('inp-tanggal').focus(); showToast("Data Disalin! Tentukan tanggal baru."); }, 500);
         }
 
         function populateForm(entry) {
@@ -598,16 +551,12 @@
             document.getElementById('inp-refleksi-mingguan').value = entry.refMingguan || '';
             document.getElementById('activities-container').innerHTML = '';
             entry.items.forEach(it => addActivityRow(it));
-            checkFriday();
-            document.getElementById('form-container').scrollIntoView({ behavior: 'smooth' });
+            checkFriday(); document.getElementById('form-container').scrollIntoView({ behavior: 'smooth' });
         }
 
         function cancelEdit() {
-            editEntryId = null;
-            document.getElementById('edit-indicator').classList.add('hidden');
-            document.getElementById('btn-cancel-edit').classList.add('hidden');
-            document.getElementById('btn-submit-jurnal').innerText = "Simpan Laporan";
-            document.getElementById('jurnal-form').reset();
+            editEntryId = null; document.getElementById('edit-indicator').classList.add('hidden'); document.getElementById('btn-cancel-edit').classList.add('hidden');
+            document.getElementById('btn-submit-jurnal').innerText = "Simpan Laporan"; document.getElementById('jurnal-form').reset();
             document.getElementById('activities-container').innerHTML = ''; addActivityRow();
         }
 
@@ -616,26 +565,29 @@
             if (entry && entry.status === "Valid") return showToast("Data Valid tidak bisa dihapus!", true);
             journalEntries = journalEntries.filter(e => String(e.id) !== String(id));
             localStorage.setItem('jurnal_entries', JSON.stringify(journalEntries));
-            renderTable();
-            renderHistoryCards();
+            renderTable(); renderHistoryCards();
         }
 
         function calculateMinutes(s, e) { const [sh, sm] = s.split(':').map(Number); const [eh, em] = e.split(':').map(Number); let d = (eh * 60 + em) - (sh * 60 + sm); return d > 0 ? d : 0; }
         function formatDateShort(d) { try { return new Date(d).toLocaleDateString('id-ID', { weekday:'short', day:'numeric', month:'short' }); } catch { return d; } }
-        function getWeekIdentifier(dateStr) { const date = new Date(dateStr); const day = date.getDay(); const diff = date.getDate() - day + (day === 0 ? -6 : 1); const mon = new Date(date.setDate(diff)); return mon.toISOString().split('T')[0]; }
+        function getWeekIdentifier(dateStr) { 
+            const date = new Date(dateStr); 
+            const day = date.getDay(); 
+            const diff = date.getDate() - day + (day === 0 ? -6 : 1); 
+            const mon = new Date(date.setDate(diff)); 
+            return mon.toISOString().split('T')[0]; 
+        }
         function checkFriday() { const v = document.getElementById('inp-tanggal').value; if(!v) return; const d = new Date(v); document.getElementById('friday-reflection-container').classList.toggle('hidden', d.getDay() !== 5); }
         function handleLogout() { location.reload(); }
 
         function renderTable() {
-            const cont = document.getElementById('output-container');
-            cont.innerHTML = '';
+            const cont = document.getElementById('output-container'); cont.innerHTML = '';
             if (journalEntries.length === 0) return cont.innerHTML = `<div class="bg-white p-8 text-center text-slate-400 font-bold text-[10px] border-2 border-dashed rounded-3xl">Kosong.</div>`;
             const groups = {}; journalEntries.forEach(e => { if (!groups[e.weekId]) groups[e.weekId] = []; groups[e.weekId].push(e); });
             Object.keys(groups).sort().forEach(wid => {
                 const weekEntries = groups[wid].sort((a,b) => new Date(a.tgl) - new Date(b.tgl));
                 const ref = weekEntries.find(e => e.refMingguan && e.refMingguan.trim() !== "")?.refMingguan;
-                const div = document.createElement('div');
-                div.className = "paper";
+                const div = document.createElement('div'); div.className = "paper";
                 div.innerHTML = `<div class="text-center mb-8 border-b-2 border-black pb-4"><h2 class="text-lg font-bold uppercase tracking-tight mb-1">Jurnal Harian Aktivitas Pendidik</h2><p class="text-[9pt] italic">SDN Ulujami 06 Pagi</p></div><div class="grid grid-cols-2 gap-4 mb-6 text-[10pt]"><div class="space-y-1"><div class="flex"><span class="w-24 font-bold">Nama</span>: <span class="ml-2">${profile.nama || '...'}</span></div><div class="flex"><span class="w-24 font-bold">NIP</span>: <span class="ml-2">${profile.nip || '...'}</span></div></div><div class="space-y-1"><div class="flex"><span class="w-24 font-bold">Jenis</span>: <span class="ml-2">${profile.jenis || '...'}</span></div>${profile.jenis === "Guru Mata Pelajaran" ? `<div class="flex"><span class="w-24 font-bold">Mapel</span>: <span class="ml-2">${profile.mapel || '...'}</span></div>` : ''}</div></div><table class="w-full border-collapse border border-black text-[8pt]"><thead class="bg-slate-50"><tr><th class="border border-black p-2 w-8">No</th><th class="border border-black p-2 w-24">Tanggal</th><th class="border border-black p-2">Aktivitas & Waktu</th><th class="border border-black p-2 w-12 text-center">Dur</th><th class="border border-black p-2">Catatan</th><th class="border border-black p-2 no-print w-14">Aksi</th></tr></thead><tbody>${weekEntries.map((e, i) => `<tr><td class="border border-black p-2 text-center">${i+1}</td><td class="border border-black p-2 font-bold">${formatDateShort(e.tgl)}</td><td class="border border-black p-2"><ul>${e.items.map(it => `<li>• ${it.desc} <span class="text-[7pt] font-bold text-indigo-600">(${it.start}-${it.end})</span></li>`).join('')}</ul></td><td class="border border-black p-2 text-center font-bold">${e.totalDur}'</td><td class="border border-black p-2 text-[7pt]">${e.cat || '-'}</td><td class="border border-black p-2 text-center no-print">${e.status !== 'Valid' ? `<div class="flex gap-1 justify-center"><button onclick="editEntry('${e.id}')" class="text-indigo-600">✎</button><button onclick="removeEntry('${e.id}')" class="text-red-500">×</button></div>` : `<span class="text-green-600 font-bold">OK</span>`}</td></tr>`).join('')}</tbody></table>${ref ? `<div class="mt-4 p-3 border border-black rounded text-[9pt]"><p class="font-bold underline uppercase mb-1">Refleksi:</p><p class="italic">${ref}</p></div>` : ''}<div class="mt-12 grid grid-cols-2 gap-10 text-[9pt] text-center"><div><p class="mb-16">Mengetahui,<br>Kepala Sekolah</p><p class="font-bold underline">................................</p></div><div><p class="mb-16">Jakarta, ${new Intl.DateTimeFormat('id-ID', { dateStyle: 'long' }).format(new Date())}<br>Guru Bersangkutan</p><p class="font-bold underline">${profile.nama || '...'}</p><p>NIP. ${profile.nip || '...'}</p></div></div>`;
                 cont.appendChild(div);
             });
@@ -644,28 +596,10 @@
         function renderHistoryCards() {
             const list = document.getElementById('history-cards-container');
             list.innerHTML = journalEntries.length === 0 ? `<div class="col-span-full py-20 text-center text-slate-400 font-bold uppercase text-[10px]">Cloud Kosong.</div>` : '';
-            
             [...journalEntries].sort((a,b) => new Date(b.tgl) - new Date(a.tgl)).forEach(e => {
                 const isValid = String(e.status).toLowerCase().trim() === "valid";
-                const card = document.createElement('div');
-                card.className = "bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden transition-all hover:shadow-md";
-                card.innerHTML = `
-                    <div class="flex justify-between items-start mb-3">
-                        <span class="text-[9px] font-bold bg-indigo-100 text-indigo-700 px-2 py-1 rounded-md uppercase">${formatDateShort(e.tgl)}</span>
-                        <div class="flex flex-col items-end">
-                            <span class="text-[9px] text-slate-400 font-bold">${e.totalDur}M</span>
-                            <span class="text-[8px] font-black uppercase ${isValid ? 'text-green-600' : 'text-slate-400'}">${e.status}</span>
-                        </div>
-                    </div>
-                    <ul class="text-[11px] text-slate-600 mb-3 space-y-1">
-                        ${e.items.map(it => `<li class="truncate">- ${it.desc}</li>`).join('')}
-                    </ul>
-                    <div class="pt-2 border-t border-slate-100 flex justify-between items-center">
-                        <div class="flex gap-3">
-                            <button onclick="duplicateFromHistory('${e.id}')" class="text-[10px] font-bold text-indigo-600 hover:underline uppercase">Duplikat</button>
-                            ${!isValid ? `<button onclick="editEntry('${e.id}')" class="text-[10px] font-bold text-slate-600 hover:underline uppercase">EDIT</button>` : ''}
-                        </div>
-                    </div>`;
+                const card = document.createElement('div'); card.className = "bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden transition-all hover:shadow-md";
+                card.innerHTML = `<div class="flex justify-between items-start mb-3"><span class="text-[9px] font-bold bg-indigo-100 text-indigo-700 px-2 py-1 rounded-md uppercase">${formatDateShort(e.tgl)}</span><div class="flex flex-col items-end"><span class="text-[9px] text-slate-400 font-bold">${e.totalDur}M</span><span class="text-[8px] font-black uppercase ${isValid ? 'text-green-600' : 'text-slate-400'}">${e.status}</span></div></div><ul class="text-[11px] text-slate-600 mb-3 space-y-1">${e.items.map(it => `<li class="truncate">- ${it.desc}</li>`).join('')}</ul><div class="pt-2 border-t border-slate-100 flex justify-between items-center"><div class="flex gap-3"><button onclick="duplicateFromHistory('${e.id}')" class="text-[10px] font-bold text-indigo-600 hover:underline uppercase">Duplikat</button>${!isValid ? `<button onclick="editEntry('${e.id}')" class="text-[10px] font-bold text-slate-600 hover:underline uppercase">EDIT</button>` : ''}</div></div>`;
                 list.appendChild(card);
             });
         }
@@ -676,10 +610,8 @@
             const data = journalEntries.map(e => ({ id: String(e.id), tgl: e.tgl, akt: e.items.map(it => `${it.desc} (${it.start}-${it.end})`).join('; '), dur: e.totalDur, cat: `${e.cat || '-'} | Ref: ${e.refMingguan || '-'}` }));
             try {
                 await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'sync', guru: profile, data: data }) });
-                showToast("Berhasil Sinkron!");
-                setTimeout(() => fetchTeacherData(profile.nip), 1500);
-            } catch (e) { showToast("Gagal Sinkron", true); }
-            finally { btn.disabled = false; btn.innerText = "Simpan ke Cloud"; }
+                showToast("Berhasil Sinkron!"); setTimeout(() => fetchTeacherData(profile.nip), 1500);
+            } catch (e) { showToast("Gagal Sinkron", true); } finally { btn.disabled = false; btn.innerText = "Simpan ke Cloud"; }
         }
 
         async function fetchSpreadsheetData() {
@@ -688,8 +620,7 @@
                 const res = await fetch(GAS_URL);
                 const result = await res.json();
                 if (result.status === "success") { renderCloudTable(result.data || []); showToast("Data KS Dimuat"); }
-            } catch (e) { showToast("Gagal Muat", true); }
-            finally { btn.disabled = false; btn.innerText = "Segarkan"; }
+            } catch (e) { showToast("Gagal Muat", true); } finally { btn.disabled = false; btn.innerText = "Segarkan"; }
         }
 
         function renderCloudTable(data) {
@@ -724,14 +655,8 @@
         
         function clearAllData() { 
             if (confirm("Reset data lokal? Histori cloud tetap aman.")) { 
-                journalEntries = []; 
-                localStorage.removeItem('jurnal_entries'); 
-                if(profile.nip) {
-                    fetchTeacherData(profile.nip); 
-                } else {
-                    renderHistoryCards(); renderTable(); 
-                    showToast("Lokal Direset");
-                }
+                journalEntries = []; localStorage.removeItem('jurnal_entries'); 
+                if(profile.nip) { fetchTeacherData(profile.nip); } else { renderHistoryCards(); renderTable(); showToast("Lokal Direset"); }
             } 
         }
     </script>
