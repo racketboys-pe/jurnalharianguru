@@ -317,18 +317,55 @@
         let cloudPasswords = { guru: "guru123", kepsek: "admin123" };
         let editEntryId = null;
 
-        // --- HELPER UNTUK PARSING TANGGAL TANPA SHIFT (LOCAL TIME) ---
+        /**
+         * FUNGSI KRUSIAL: Memastikan tanggal tetap sesuai inputan (Teks Murni)
+         * Mencegah pergeseran hari yang disebabkan oleh konversi otomatis ke UTC/Date Object.
+         */
+        function safeDateString(val) {
+            if (!val) return "";
+            
+            // Jika data berupa string dari server (format: YYYY-MM-DD...)
+            if (typeof val === 'string') {
+                // Ambil hanya bagian 10 karakter pertama (YYYY-MM-DD)
+                const matches = val.match(/(\d{4})-(\d{2})-(\d{2})/);
+                if (matches) return matches[0];
+                
+                // Jika format tanggal Indonesia (DD/MM/YYYY) dari getDisplayValues()
+                const idMatches = val.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+                if (idMatches) {
+                    const [_, d, m, y] = idMatches;
+                    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                }
+            }
+            
+            // Jika data berupa objek Date atau format ISO lainnya
+            const d = new Date(val);
+            if (!isNaN(d.getTime())) {
+                // Sangat penting: gunakan komponen lokal, bukan UTC
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+            
+            return String(val).substring(0, 10);
+        }
+
+        /**
+         * Parsing ke Objek Date secara Lokal agar "Senin tetap Senin"
+         */
         function parseLocalDate(dateStr) {
             if (!dateStr) return new Date();
-            const [y, m, d] = dateStr.split('-').map(Number);
-            return new Date(y, m - 1, d); // Gunakan constructor Tahun, Bulan, Hari untuk local timezone
+            const clean = safeDateString(dateStr);
+            const [y, m, d] = clean.split('-').map(Number);
+            // Gunakan constructor (y, m-1, d) agar diproses sebagai jam 00:00 Waktu Lokal (WIB)
+            return new Date(y, m - 1, d);
         }
 
         async function fetchValidationTicker() {
             if (!GAS_URL || GAS_URL.includes("URL_GOOGLE")) return;
             try {
                 const res = await fetch(GAS_URL);
-                if (!res.ok) throw new Error("Gagal terhubung ke server");
                 const result = await res.json();
                 if (result.status === "success" && result.data) {
                     const cont = document.getElementById('validation-ticker');
@@ -355,7 +392,6 @@
             try {
                 const res = await fetch(GAS_URL, { signal: controller.signal });
                 clearTimeout(timeoutId);
-                if (!res.ok) throw new Error("HTTP Error");
                 const result = await res.json();
                 if (result.status === "success") {
                     cloudPasswords = result.passwords;
@@ -363,13 +399,12 @@
                     dot.className = "w-2 h-2 rounded-full bg-green-500 pulse-valid";
                     instruction.classList.add('hidden');
                 } else {
-                    throw new Error(result.message || "Kesalahan Server");
+                    throw new Error(result.message);
                 }
             } catch (e) { 
-                text.innerText = "Terputus"; 
-                text.className = "text-[9px] font-bold text-red-500 uppercase";
+                text.innerText = "Terputus"; text.className = "text-[9px] font-bold text-red-500 uppercase";
                 dot.className = "w-2 h-2 rounded-full bg-red-500"; 
-                if (e.message.includes("Sheet 'Database' atau 'Config' tidak ditemukan")) { instruction.classList.remove('hidden'); }
+                if (e.message && e.message.includes("Sheet")) { instruction.classList.remove('hidden'); }
             }
         }
 
@@ -413,7 +448,6 @@
             if(btnRefresh) btnRefresh.disabled = true;
             try {
                 const res = await fetch(GAS_URL);
-                if (!res.ok) throw new Error("Gagal sinkron cloud");
                 const result = await res.json();
                 if (result.status === "success") {
                     const filtered = (result.data || []).filter(row => String(row.nip).replace(/'/g, "").trim() === String(nip).trim());
@@ -429,10 +463,13 @@
                         const actualCat = catParts[0].trim();
                         const refMingguan = catParts[1] ? catParts[1].trim() : '';
 
+                        // Gunakan safeDateString untuk mengunci hari agar tidak mundur
+                        const finalDate = safeDateString(row.tanggal_aktivitas);
+
                         return { 
                             id: String(row.id_jurnal), 
-                            tgl: row.tanggal_aktivitas, 
-                            weekId: getWeekIdentifier(row.tanggal_aktivitas), 
+                            tgl: finalDate, 
+                            weekId: getWeekIdentifier(finalDate), 
                             items, 
                             totalDur: row.durasi_menit, 
                             cat: (actualCat === '-' ? '' : actualCat), 
@@ -540,7 +577,7 @@
             
             if (editEntryId) { 
                 const idx = journalEntries.findIndex(e => String(e.id) === String(editEntryId)); 
-                if(idx !== -1 && journalEntries[idx].status === "Valid") return showToast("Sudah Valid! Tidak dapat diubah.", true);
+                if(idx !== -1 && journalEntries[idx].status === "Valid") return showToast("Sudah Valid!", true);
                 if(idx !== -1) journalEntries[idx] = entry; cancelEdit(); 
             } else { journalEntries.push(entry); }
             
@@ -552,7 +589,7 @@
 
         function editEntry(id) {
             const entry = journalEntries.find(e => String(e.id) === String(id));
-            if (!entry || entry.status === "Valid") return showToast("Sudah Valid! Tidak dapat diedit.", true);
+            if (!entry || entry.status === "Valid") return showToast("Sudah Valid!", true);
             editEntryId = String(id); populateForm(entry);
             document.getElementById('edit-indicator').classList.remove('hidden');
             document.getElementById('btn-cancel-edit').classList.remove('hidden');
@@ -566,7 +603,7 @@
             document.getElementById('edit-indicator').classList.add('hidden');
             document.getElementById('btn-cancel-edit').classList.add('hidden');
             document.getElementById('btn-submit-jurnal').innerText = "Simpan Laporan";
-            setTimeout(() => { document.getElementById('inp-tanggal').focus(); showToast("Data Disalin! Tentukan tanggal baru."); }, 500);
+            setTimeout(() => { document.getElementById('inp-tanggal').focus(); showToast("Data Disalin!"); }, 500);
         }
 
         function populateForm(entry) {
@@ -596,9 +633,7 @@
         function calculateMinutes(s, e) { const [sh, sm] = s.split(':').map(Number); const [eh, em] = e.split(':').map(Number); let d = (eh * 60 + em) - (sh * 60 + sm); return d > 0 ? d : 0; }
         
         function formatDateShort(d) { 
-            try { 
-                return parseLocalDate(d).toLocaleDateString('id-ID', { weekday:'short', day:'numeric', month:'short' }); 
-            } catch { return d; } 
+            try { return parseLocalDate(d).toLocaleDateString('id-ID', { weekday:'short', day:'numeric', month:'short' }); } catch { return d; } 
         }
 
         function getWeekIdentifier(dateStr) { 
@@ -606,7 +641,10 @@
             const day = date.getDay(); 
             const diff = date.getDate() - day + (day === 0 ? -6 : 1); 
             const mon = new Date(date.setDate(diff)); 
-            return mon.toISOString().split('T')[0]; 
+            const y = mon.getFullYear();
+            const m = String(mon.getMonth() + 1).padStart(2, '0');
+            const d = String(mon.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`; 
         }
 
         function checkFriday() { const v = document.getElementById('inp-tanggal').value; if(!v) return; const d = parseLocalDate(v); document.getElementById('friday-reflection-container').classList.toggle('hidden', d.getDay() !== 5); }
@@ -615,7 +653,9 @@
         function renderTable() {
             const cont = document.getElementById('output-container'); cont.innerHTML = '';
             if (journalEntries.length === 0) return cont.innerHTML = `<div class="bg-white p-8 text-center text-slate-400 font-bold text-[10px] border-2 border-dashed rounded-3xl">Kosong.</div>`;
-            const groups = {}; journalEntries.forEach(e => { if (!groups[e.weekId]) groups[e.weekId] = []; groups[e.weekId].push(e); });
+            const groups = {}; 
+            journalEntries.forEach(e => { if (!groups[e.weekId]) groups[e.weekId] = []; groups[e.weekId].push(e); });
+            
             Object.keys(groups).sort().forEach(wid => {
                 const weekEntries = groups[wid].sort((a,b) => new Date(a.tgl) - new Date(b.tgl));
                 const ref = weekEntries.find(e => e.refMingguan && e.refMingguan.trim() !== "" && e.refMingguan !== "-")?.refMingguan;
@@ -667,8 +707,10 @@
             const body = document.getElementById('cloud-table-body'); body.innerHTML = '';
             data.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).forEach((row, i) => {
                 const isValid = String(row.status_validasi).toLowerCase().trim() === "valid";
+                const finalDate = safeDateString(row.tanggal_aktivitas);
+
                 const tr = document.createElement('tr'); if(isValid) tr.className = "row-valid";
-                tr.innerHTML = `<td class="px-5 py-4 text-slate-400 font-bold">${i+1}</td><td class="px-5 py-4"><div class="font-bold text-slate-800">${row.nama_guru}</div><div class="text-[9px] text-slate-400 font-bold">${row.nip}</div></td><td class="px-5 py-4 font-bold text-slate-600">${formatDateShort(row.tanggal_aktivitas)}</td><td class="px-5 py-4 text-slate-600 max-w-xs truncate" title="${row.rincian_aktivitas}">${row.rincian_aktivitas}</td><td class="px-5 py-4 text-center font-bold text-indigo-700">${row.durasi_menit}'</td><td class="px-5 py-4"><span class="text-[9px] font-black uppercase ${isValid ? 'text-green-600' : 'text-slate-300'}">${row.status_validasi}</span></td><td class="px-5 py-4 text-center">${!isValid ? `<button onclick="validateData('${row.timestamp}', '${row.nama_guru}')" class="bg-green-600 text-white px-3 py-1 rounded-lg text-[10px] font-bold">Validasi</button>` : `<span class="text-green-600 font-bold">OK</span>`}</td>`;
+                tr.innerHTML = `<td class="px-5 py-4 text-slate-400 font-bold">${i+1}</td><td class="px-5 py-4"><div class="font-bold text-slate-800">${row.nama_guru}</div><div class="text-[9px] text-slate-400 font-bold">${row.nip}</div></td><td class="px-5 py-4 font-bold text-slate-600">${formatDateShort(finalDate)}</td><td class="px-5 py-4 text-slate-600 max-w-xs truncate" title="${row.rincian_aktivitas}">${row.rincian_aktivitas}</td><td class="px-5 py-4 text-center font-bold text-indigo-700">${row.durasi_menit}'</td><td class="px-5 py-4"><span class="text-[9px] font-black uppercase ${isValid ? 'text-green-600' : 'text-slate-300'}">${row.status_validasi}</span></td><td class="px-5 py-4 text-center">${!isValid ? `<button onclick="validateData('${row.timestamp}', '${row.nama_guru}')" class="bg-green-600 text-white px-3 py-1 rounded-lg text-[10px] font-bold">Validasi</button>` : `<span class="text-green-600 font-bold">OK</span>`}</td>`;
                 body.appendChild(tr);
             });
         }
@@ -687,7 +729,7 @@
             if(!newPass) return showToast("Masukkan sandi baru!", true);
             try {
                 await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "change_password", role: role, new_password: newPass }) });
-                showToast("Sandi " + role + " diperbarui!"); document.getElementById('set-pass-new').value = ''; cloudPasswords[role] = newPass;
+                showToast("Sandi diperbarui!"); document.getElementById('set-pass-new').value = ''; cloudPasswords[role] = newPass;
             } catch (e) { showToast("Gagal", true); }
         }
 
