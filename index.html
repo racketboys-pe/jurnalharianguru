@@ -318,19 +318,16 @@
         let editEntryId = null;
 
         /**
-         * FUNGSI KRUSIAL: Memastikan tanggal tetap sesuai inputan (Teks Murni)
-         * Mencegah pergeseran hari yang disebabkan oleh konversi otomatis ke UTC/Date Object.
+         * FUNGSI KRUSIAL: Memastikan tanggal tetap sesuai inputan.
          */
         function safeDateString(val) {
             if (!val) return "";
-            
-            // Jika data berupa string dari server (format: YYYY-MM-DD...)
+
+            // Jika format string, cari pola YYYY-MM-DD
             if (typeof val === 'string') {
-                // Ambil hanya bagian 10 karakter pertama (YYYY-MM-DD)
-                const matches = val.match(/(\d{4})-(\d{2})-(\d{2})/);
-                if (matches) return matches[0];
+                const strictIsoMatch = val.match(/(\d{4})-(\d{2})-(\d{2})/);
+                if (strictIsoMatch) return strictIsoMatch[0];
                 
-                // Jika format tanggal Indonesia (DD/MM/YYYY) dari getDisplayValues()
                 const idMatches = val.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
                 if (idMatches) {
                     const [_, d, m, y] = idMatches;
@@ -338,10 +335,9 @@
                 }
             }
             
-            // Jika data berupa objek Date atau format ISO lainnya
+            // Fallback Date Object
             const d = new Date(val);
             if (!isNaN(d.getTime())) {
-                // Sangat penting: gunakan komponen lokal, bukan UTC
                 const year = d.getFullYear();
                 const month = String(d.getMonth() + 1).padStart(2, '0');
                 const day = String(d.getDate()).padStart(2, '0');
@@ -351,14 +347,10 @@
             return String(val).substring(0, 10);
         }
 
-        /**
-         * Parsing ke Objek Date secara Lokal agar "Senin tetap Senin"
-         */
         function parseLocalDate(dateStr) {
             if (!dateStr) return new Date();
             const clean = safeDateString(dateStr);
             const [y, m, d] = clean.split('-').map(Number);
-            // Gunakan constructor (y, m-1, d) agar diproses sebagai jam 00:00 Waktu Lokal (WIB)
             return new Date(y, m - 1, d);
         }
 
@@ -462,8 +454,6 @@
                         const catParts = rawCat.split('| Ref: ');
                         const actualCat = catParts[0].trim();
                         const refMingguan = catParts[1] ? catParts[1].trim() : '';
-
-                        // Gunakan safeDateString untuk mengunci hari agar tidak mundur
                         const finalDate = safeDateString(row.tanggal_aktivitas);
 
                         return { 
@@ -682,7 +672,8 @@
             const btn = document.getElementById('btn-cloud'); btn.disabled = true; btn.innerText = "Mengirim...";
             const data = journalEntries.map(e => ({ 
                 id: String(e.id), 
-                tgl: e.tgl, 
+                // PERBAIKAN: Menambahkan jam 10:00:00 untuk memaksa tanggal tetap sama
+                tgl: `${e.tgl} 10:00:00`,
                 akt: e.items.map(it => `${it.desc} (${it.start}-${it.end})`).join('; '), 
                 dur: e.totalDur, 
                 cat: `${e.cat || '-'} | Ref: ${e.refMingguan || '-'}` 
